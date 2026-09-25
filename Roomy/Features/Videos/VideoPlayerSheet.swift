@@ -28,7 +28,7 @@ struct VideoPlayerSheet: View {
         .padding(.horizontal, Space.margin)
         .padding(.top, Space.s16)
         .padding(.bottom, Space.margin)
-        .background(RoomyColor.bg)
+        .background(RoomyColor.sheet)
         .task(id: attempt) { await loadVideo() }
         .onDisappear { player?.pause() }
     }

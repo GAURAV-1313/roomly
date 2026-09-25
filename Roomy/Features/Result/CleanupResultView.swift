@@ -26,7 +26,7 @@ struct CleanupResultView: View {
             .padding(.horizontal, Space.margin)
             .padding(.vertical, Space.s8)
         }
-        .background(RoomyColor.bg)
+        .background(RoomyColor.sheet)
         .bottomBar { actions(summary.stage) }
         .onAppear { Haptics.success() }
     }

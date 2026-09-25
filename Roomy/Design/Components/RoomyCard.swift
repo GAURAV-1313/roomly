@@ -40,6 +40,11 @@ extension View {
                 .fill(RoomyColor.card)
                 .shadow(color: RoomyColor.cardShadow, radius: Layout.cardShadowRadius, y: Layout.cardShadowY)
         }
+        // Dark mode lifts cards with a faint edge instead of a shadow; in light the edge is fully transparent.
+        .overlay {
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .strokeBorder(RoomyColor.cardEdge, lineWidth: 1)
+        }
     }
 }
 

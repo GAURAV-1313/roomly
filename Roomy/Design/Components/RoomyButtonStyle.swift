@@ -61,7 +61,7 @@ struct RoomyButtonStyle: ButtonStyle {
 /// Prominent buttons are tinted glass (solid below iOS 26); secondary ones a soft fill; text buttons nothing.
 private struct ButtonSurface: ViewModifier {
     /// How strongly the red tints the glass: enough to read as the delete button, light enough to be glass.
-    static let redGlassTint = 0.86
+    static let redGlassTint = 0.8
 
     let kind: RoomyButtonKind
 

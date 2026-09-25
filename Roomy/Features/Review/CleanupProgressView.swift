@@ -30,7 +30,7 @@ struct CleanupProgressView: View {
             .padding(.vertical, Space.s8)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(RoomyColor.bg)
+        .background(RoomyColor.sheet)
         .onChange(of: step, initial: true) { _, running in
             seen.insert(running)
         }

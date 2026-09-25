@@ -30,7 +30,7 @@ struct ReviewList: View {
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s16)
         }
-        .background(RoomyColor.bg)
+        .background(RoomyColor.sheet)
         .bottomBar {
             if !review.ready.isEmpty {
                 ReviewDeleteDock(ready: review.ready, isConfirming: $isConfirming, onConfirm: onConfirm)
