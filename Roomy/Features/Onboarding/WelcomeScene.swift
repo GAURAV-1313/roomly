@@ -35,12 +35,13 @@ nonisolated enum WelcomeBeat: Sendable, Equatable, CaseIterable {
 
     var start: Duration {
         switch self {
-        case .drop: .milliseconds(200)
-        case .signal: .milliseconds(700)
-        case .sweep: .milliseconds(1100)
-        case .promise: .milliseconds(1300)
-        case .truths: .milliseconds(1800)
-        case .pleased: .milliseconds(1900)
+        // Paced so the full, red, shaking capsule is on screen long enough to read before it is cleaned down.
+        case .drop: .milliseconds(300)
+        case .signal: .milliseconds(1200)
+        case .sweep: .milliseconds(2600)
+        case .promise: .milliseconds(3000)
+        case .truths: .milliseconds(3500)
+        case .pleased: .milliseconds(3800)
         }
     }
 }

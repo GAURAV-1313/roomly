@@ -1,25 +1,25 @@
-# Submission note (draft, under 150 words)
+# Submission note (under 150 words)
 
-To: bharat7888@gmail.com — send it yourself after recording; replace the bracketed links.
+To: bharat7888@gmail.com. Send it yourself after recording on the iPhone, with the two links filled in.
+The repository is private: add the reviewer as a collaborator, or make it public, before sending.
 
 ---
 
 Hi Bharat,
 
-Roomy is an on-device storage cleaner for iPhone: similar photos with a best pick, screenshots, large
-videos and duplicate contacts, all staged into one Review with a single delete path.
+Roomy is an on-device storage cleaner for iPhone: similar photos with a best pick, screenshots, large videos
+and duplicate contacts, all staged into one Review with a single delete path.
 
-Tools: Claude Code for the code, Figma MCP for the design, Xcode 26 and the iOS Simulator, and Axiom's iOS
-auditors as a second review.
+Tools: Claude Code for the code, Figma (through its MCP) for every screen first, Xcode 27 and the iOS 27
+simulator.
 
-Works: the whole loop on iPhone, including limited and denied access. Merges back up contacts first, and
-"freed" appears only after free space is measured again.
+Works: the full loop on iPhone, with limited and denied access, light and dark mode. Contacts are merged, never
+lost, after a backup. "Freed" appears only once free space is measured again.
 
-Skipped on purpose: video compression, widget (no App Groups on a free account), vault, TestFlight.
+Skipped on purpose: video compression, widget, vault, TestFlight (paid account).
 
-Hardest problem: grouping similar photos at scale without false groups. Exact duplicates use LSH over
-perceptual hashes; near-duplicates only within the same moment. A 20,000-photo test finds exactly the
-planted groups in 0.09 s.
+Hardest problem: grouping similar photos at scale without false groups. Exact copies use LSH over perceptual
+hashes; near-duplicates only within one moment. A 20,000-photo test finds exactly the planted groups.
 
 Repo: [link] · Video: [link]
 

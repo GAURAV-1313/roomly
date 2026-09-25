@@ -1,6 +1,6 @@
 // Why: the Welcome stage is Roomy over a soft ground shadow, above the storage capsule. Roomy falls in once and
-// lands with a small squash while his shadow darkens under him; the capsule shakes once, with one warning haptic,
-// when its fill turns red. Each of those is keyed to a counter in `WelcomeScene`, not to a flag, so jumping to the
+// lands with a small squash while his shadow darkens under him; the capsule shakes three times, with one warning
+// haptic, when its fill turns red. Each of those is keyed to a counter in `WelcomeScene`, not to a flag, so jumping to the
 // rest pose never replays them — and with Reduce Motion the counters never move at all.
 import SwiftUI
 
@@ -17,6 +17,8 @@ struct WelcomeStage: View {
                     content.offset(x: offset)
                 } keyframes: { _ in
                     KeyframeTrack {
+                        LinearKeyframe(Motion.shakeDistance, duration: Motion.shakeStep)
+                        LinearKeyframe(-Motion.shakeDistance, duration: Motion.shakeStep)
                         LinearKeyframe(Motion.shakeDistance, duration: Motion.shakeStep)
                         LinearKeyframe(-Motion.shakeDistance, duration: Motion.shakeStep)
                         LinearKeyframe(Motion.shakeDistance, duration: Motion.shakeStep)

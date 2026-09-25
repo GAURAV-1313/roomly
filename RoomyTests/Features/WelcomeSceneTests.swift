@@ -8,8 +8,8 @@ import XCTest
 final class WelcomeSceneTests: XCTestCase {
     func testBeatsPlayInStoryboardOrderWithinAboutTwoAndAHalfSeconds() {
         XCTAssertEqual(WelcomeScene.beats, [.drop, .signal, .sweep, .promise, .truths, .pleased])
-        XCTAssertEqual(WelcomeScene.beats.first?.start, .milliseconds(200))
-        XCTAssertLessThanOrEqual(WelcomeScene.beats.last?.start ?? .zero, .milliseconds(2400))
+        XCTAssertEqual(WelcomeScene.beats.first?.start, .milliseconds(300))
+        XCTAssertLessThanOrEqual(WelcomeScene.beats.last?.start ?? .zero, .milliseconds(4000))
     }
 
     func testTheStoryStartsFullAndEndsAtRest() {

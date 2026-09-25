@@ -34,7 +34,7 @@ open Roomy.xcodeproj
   `xcodegen generate`, which would erase a team picked in Xcode. Free provisioning expires after 7 days; run
   again from Xcode to renew. Target device: iPhone 16 on iOS 27. See [docs/DEVICE.md](docs/DEVICE.md).
 - **Checks:** `scripts/check.sh` runs the architecture rules, `swift-format` lint, a zero-warning simulator
-  build, the unit tests (274) and an unsigned iPhone build that fails on any warning. `scripts/check.sh --fast`
+  build, the unit tests (275) and an unsigned iPhone build that fails on any warning. `scripts/check.sh --fast`
   skips the builds.
 
 ## What it does
@@ -48,7 +48,7 @@ open Roomy.xcodeproj
 | Large videos | Sorted by real on-disk size, with an inline player |
 | Duplicate contacts | Cards are linked only by a shared phone number (international form, read in the phone's region; an extension is part of the number, so two extensions of one line are two people) or email (case); a shared name alone never groups cards; a value on more than 3 cards links them only when their names agree, so exact copies are found and switchboards are not; the label shows the weakest link; merge preview shows every value and where it comes from |
 | Review and delete | One basket across all categories → Review → one red glass Delete button → confirmation → iOS's own Photos prompt. The Delete button never sits where the Review capsule was tapped, so a double tap can't reach it |
-| Result | The amount moved, a usage bar with a pin: amber "in Recently Deleted" until free space is measured again, then green "now free" |
+| Result | The amount moved on the same tick bar as the dashboard, where the last used tick rises into a marker: an amber outline with "in Recently Deleted" until free space is measured again, then solid green with "now free" |
 | Settings | Photos and Contacts access, rescan, contact backups, how deletion works, and Appearance (System, Light, Dark) |
 | Permissions | Photos and Contacts each handle not-asked, limited, denied and restricted, with a way forward in every state |
 
@@ -74,6 +74,16 @@ open Roomy.xcodeproj
   merge combine values with one shared function. Notes can't be read by apps, so the contacts screen and the
   confirmation say notes on removed cards aren't carried over. A card edited after the scan stops its group
   from merging, and a group Contacts refuses to save (a read-only account) is not offered again.
+- **Merge, not delete, for duplicate contacts.** The brief allows "merge or delete"; Roomy merges.
+  - *Delete* would remove the extra cards outright. If one had a second number, a work email or an address the
+    other lacked, that detail is gone — and iOS shows no prompt and has no Recently Deleted for contacts.
+  - *Merge* keeps one card and copies every phone, email, address, URL, profile, relation and date from the
+    others into it (and fills its empty name, company and birthday fields), then removes the extra cards. The
+    result is the same single card a delete would leave, with nothing lost.
+  - Either way the extra cards are removed, so both clean the address book equally; merge is the safer version.
+    Every card is written to a vCard backup first (Settings → Contact backups), and the merge goes through the
+    same Review and confirmation as photos. A plain "delete extra cards" option could be added the same way, but
+    it would only ever lose data compared with merge, so it was left out on purpose.
 - **Contacts need full access.** With iOS 18 limited access Roomy would see a handful of cards and miss most
   duplicates, so it explains that instead of showing a misleadingly short list.
 - **File sizes via `PHAssetResource` KVC.** There is no public size API; every cleaner reads `fileSize` this
@@ -82,8 +92,10 @@ open Roomy.xcodeproj
   loading state and animation was designed and approved there before it was built. iOS 26 Liquid Glass only in
   the navigation layer (bars, capsules, primary buttons), opaque content, one `RoomyGlass` modifier with the
   iOS 17/18 fallback. On iOS 27 the system re-tunes glass on its own; nothing relies on its transparency.
-- **The moved amount is a labelled pin, not an arc.** A cleanup usually moves under 1% of the phone, which a
-  ring or bar can't draw honestly, so the result marks the used/free boundary and states the amount in words.
+- **The moved amount is a marker, not an arc.** A cleanup usually moves under 1% of the phone, which a ring or
+  bar can't draw honestly, so the result raises the last used tick at the real used/free boundary and states the
+  amount in words underneath. Pending and freed differ in shape (outline, then filled with a check) and words,
+  not colour alone.
 - **Calm motion, always optional.** Skeletons shaped like the real layout (shown only if loading takes over
   0.3 s), a zoom from each category tile into its screen (iOS 18+), a staggered dashboard, and the welcome
   story. Every animation has a Reduce Motion fallback, and timings live in one `Motion` token file.
@@ -117,7 +129,8 @@ The full rulebook is [docs/ENGINEERING.md](docs/ENGINEERING.md).
 ## Scope
 
 Built: everything in the brief (dashboard, similar photos with best pick, screenshots, large videos, duplicate
-contacts with merge, review-before-delete, denied and limited permissions).
+contacts with merge, review-before-delete, denied and limited permissions), plus the bonus "space freed" summary.
+Duplicate contacts are merged rather than deleted; see "Merge, not delete" above for why.
 
 Skipped on purpose: video compression (slow, hard to verify, needs a save-then-delete flow), widget (needs App
 Groups, which a free Apple ID can't use), Face ID vault (iOS already has a locked Hidden album), TestFlight

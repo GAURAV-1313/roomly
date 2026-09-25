@@ -47,7 +47,7 @@ nonisolated extension Motion {
     /// The Welcome story's beats (Figma storyboard 147:12369). Roomy falls this far as he drops in.
     static let welcomeDrop: CGFloat = 120
     /// The drop itself and the spring that lands it.
-    static let dropDuration = 0.5
+    static let dropDuration = 0.7
     static let dropSpring = Spring(response: 0.45, dampingRatio: 0.62)
     /// Roomy fades in over the first part of the fall.
     static let dropFade = 0.15
@@ -55,17 +55,18 @@ nonisolated extension Motion {
     static let squashScale: CGFloat = 0.94
     static let squashIn = 0.08
     static let squashOut = 0.14
-    /// The signal: the fill warms into red, and the capsule shakes this far, for two cycles.
-    static let signalWarm: Animation = .easeOut(duration: 0.25)
-    static let shakeDistance: CGFloat = 3
-    static let shakeStep = 0.064
+    /// The signal: the fill warms into red, and the capsule shakes this far, for three slow cycles, so it reads as
+    /// "full" rather than a flicker.
+    static let signalWarm: Animation = .easeOut(duration: 0.5)
+    static let shakeDistance: CGFloat = 5
+    static let shakeStep = 0.1
     /// The clean-down sweep of the fill, and the promise and truths rising in.
-    static let sweep: Animation = .smooth(duration: 0.7)
-    static let promiseRise: Animation = .smooth(duration: 0.4)
+    static let sweep: Animation = .smooth(duration: 1.1)
+    static let promiseRise: Animation = .smooth(duration: 0.5)
     static let promiseOffset: CGFloat = 10
-    static let truthRise: Animation = .smooth(duration: 0.35)
+    static let truthRise: Animation = .smooth(duration: 0.45)
     static let truthOffset: CGFloat = 8
-    static let truthStagger = 0.12
+    static let truthStagger = 0.15
     /// Onboarding → dashboard: one root crossfade.
     static let handOff: Animation = .easeInOut(duration: 0.35)
 }

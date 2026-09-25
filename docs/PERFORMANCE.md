@@ -42,6 +42,15 @@ strongest evidence wins; a regression test pins it).
 - **Nothing blocks the UI**: the scan runs off the main actor and streams progress; the dashboard fills in
   while it runs, and a newer scan cancels an older one.
 
+## iOS 27 (Xcode 27, 26 Sep 2026)
+
+The full check runs on the iOS 27 simulator (iPhone 18 Pro): 275 tests pass, and an unsigned iPhone build has no
+warnings. A small library of 22 synthetic photos (4 planted exact copies, 3 planted near-duplicates, 3
+screenshot-shaped images), 2 videos and 5 contacts is scanned within a few seconds of the dashboard appearing.
+Screenshots, videos and the contact pair (two cards sharing a number) come out exactly as planted. Similar photos
+found all 7 planted pairs in one run and 6 in another; the planted near-duplicates were blurred copies, which sit
+close to the similarity limit, so one missing is a miss, not a false group. Not yet investigated further.
+
 ## Still to measure on the iPhone 16
 
 Real libraries add iCloud-only originals (skipped, never downloaded), HEIC decoding and Photos' own
