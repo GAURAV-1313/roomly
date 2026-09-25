@@ -7,9 +7,15 @@ no account.
 Built for the AppFactory App Builder selection task. iOS 17+, SwiftUI, Swift 6, no third-party packages.
 The mascot is Roomy, a small robin that sits on the storage card and reacts to what the app is doing.
 
-| Light | Dark |
-|---|---|
-| ![Dashboard, light](design/app-dashboard.png) | ![Dashboard, dark](design/app-dashboard-dark.png) |
+<p align="center">
+  <img src="design/app-dashboard.png" alt="Dashboard in light mode" width="300">
+  &nbsp;&nbsp;
+  <img src="design/app-dashboard-dark.png" alt="Dashboard in dark mode" width="300">
+</p>
+
+Every screen, as designed in Figma and built:
+
+![Every screen](design/screens-overview.png)
 
 ## Build and run
 

@@ -2,7 +2,7 @@
 
 Figma (Foundations · Components · Screens · Icon): https://www.figma.com/design/vkLwPMTONVGAW83m8B1oK8
 
-- `screens-overview.png` — the Figma screens (iPhone 15, 393×852), iOS 26 Liquid Glass in the navigation layer only.
+- `screens-overview.png` — every v5 screen from Figma (393×852): launch, onboarding, dashboard, the four categories, Review, deleting, result, Settings.
 - `app-dashboard.png` — the dashboard as built, in the simulator with a synthetic test library.
 - `AppIcon-1024.png` — unmasked master (background + halo + mascot layers) for Icon Composer / the asset catalog.
 - Tokens in Figma (`Roomy/Color`, `Roomy/Space`) mirror `Roomy/Design/Tokens/` (Colors, Layout, Typography) 1:1.
