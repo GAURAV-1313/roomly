@@ -27,20 +27,17 @@ final class DashboardSummaryTests: XCTestCase {
         XCTAssertEqual(done.usageTitle, "91% full")
         XCTAssertEqual(done.usageDetail, "\(nearlyFull.used.byteString) used · \(nearlyFull.free.byteString) free")
         XCTAssertEqual(done.heroCaption, "can be cleaned up")
-        XCTAssertEqual(done.cardAction, .rescan)
 
         let scanning = DashboardSummary(
             phase: .indexing, volume: roomy, canUseLibrary: true, indexProgress: IndexProgress(scanned: 42, total: 90))
         XCTAssertEqual(scanning.cardTitle, "Finding space")
         XCTAssertEqual(scanning.usageTitle, "50% full", "how full the phone is stays visible while scanning")
         XCTAssertEqual(scanning.heroCaption, "found so far")
-        XCTAssertEqual(scanning.cardAction, .cancel)
         XCTAssertEqual(scanning.progressText, "42 of 90 photos")
 
         let blocked = DashboardSummary(phase: .idle, volume: roomy, canUseLibrary: false)
         XCTAssertEqual(blocked.cardTitle, "Your storage")
         XCTAssertFalse(blocked.showsAmount, "without a scan there is no amount to show, not a guess")
-        XCTAssertNil(blocked.cardAction)
     }
 
     func testUsedFractionIsWhatIsNotFree() {
@@ -90,7 +87,6 @@ final class DashboardSummaryTests: XCTestCase {
     func testStoppedComparisonNeverReadsAsAllClear() {
         let stopped = DashboardSummary(phase: .stopped, volume: roomy, canUseLibrary: true)
         XCTAssertEqual(stopped.cardTitle, "Comparison not finished")
-        XCTAssertEqual(stopped.cardAction, .resume)
         XCTAssertFalse(stopped.isScanning)
         let similar = stopped.tiles.first { $0.route == .similarPhotos }
         XCTAssertEqual(similar?.detail, "Comparison not finished")
@@ -128,12 +124,5 @@ final class DashboardSummaryTests: XCTestCase {
         let unsized = CategoryTotals(count: 2, unsizedCount: 2)
         let shots = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, screenshots: unsized)
         XCTAssertEqual(shots.tiles.first { $0.route == .screenshots }?.detail, "2 screenshots · size unavailable")
-    }
-
-    func testCardActionMatchesPhase() {
-        XCTAssertNil(DashboardSummary(phase: .idle, volume: roomy, canUseLibrary: true).cardAction)
-        XCTAssertEqual(DashboardSummary(phase: .indexing, volume: roomy, canUseLibrary: true).cardAction, .cancel)
-        XCTAssertEqual(DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true).cardAction, .rescan)
-        XCTAssertNil(DashboardSummary(phase: .done, volume: roomy, canUseLibrary: false).cardAction)
     }
 }

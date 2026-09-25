@@ -13,7 +13,10 @@ Figma (Foundations · Components · Screens · Icon): https://www.figma.com/desi
     scroll away together (the navigation bar is hidden on the dashboard only).
   - `StorageHeroCard v5` → `StorageCard`: a navy-to-parchment card with the headline and Roomy perched on a white
     card holding "92% full", used and free in words, the barcode `UsageBar` (used vs free only), then what can be
-    cleaned up beside the one action that fits the scan (Cancel / Rescan / Resume) and the scan's progress.
+    cleaned up and, while scanning, the photo count in words. It holds no action and no progress bar.
+  - `Dashboard v5 — option A` → `DashboardActionBar` + `DashboardBottomAction`: one state-driven bottom capsule
+    (Scan for space / Cancel scan with a progress fill / Resume scan / Scan again / Review). With items saved and a
+    scan action available it splits into a round glass scan button and the Review capsule.
   - `CategoryTile v5` → `CategoryCard` + `ThumbStack`: a 2×2 grid of tiles, each with a well tinted in its
     category's colour showing real items (or a glyph saying why not), one column at accessibility text sizes.
   - `NoticeRow v5` → `NoticeRow` in `Roomy/Design/Components/`: one compact white row per notice, the whole row

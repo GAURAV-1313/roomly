@@ -1,5 +1,6 @@
-// Why: the floating glass capsule at the bottom of the screen. It is the one primary action on a screen,
-// so it has one implementation and one iOS 17 fallback. When its title's count changes the digits roll.
+// Why: the floating glass capsule at the bottom of the screen, placed where every screen places it: the side
+// margin in, just above the home indicator. It is the one primary action on a screen, so there is one capsule
+// (`ActionCapsule`) with one iOS 17 fallback, and this is its standard position.
 import SwiftUI
 
 struct BottomActionBar: View {
@@ -9,23 +10,9 @@ struct BottomActionBar: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .contentTransition(.numericText())
-                .animation(Motion.snappy, value: title)
-                .font(RoomyFont.headline)
-                .foregroundStyle(isProminent ? RoomyColor.onAccent : RoomyColor.textPrimary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Space.s16)
-                .padding(.vertical, Space.s8)
-                .frame(maxWidth: .infinity)
-                // A minimum, not a fixed height: at large text sizes the label wraps and the capsule grows.
-                .frame(minHeight: Layout.bottomBarHeight)
-                .roomyGlass(in: Capsule(), style: isProminent ? .prominent(RoomyColor.accent) : .regular)
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, Space.margin)
-        .padding(.bottom, Space.s12)
+        ActionCapsule(title: title, systemImage: systemImage, isProminent: isProminent, action: action)
+            .padding(.horizontal, Space.margin)
+            .padding(.bottom, Space.s12)
     }
 }
 

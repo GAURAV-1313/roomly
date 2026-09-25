@@ -1,5 +1,6 @@
 // Why: every Settings row has the same shape (Figma "SettingsRow v5"): a small tinted icon, a label, and what
-// the row does at its end — a value, an accent label for an action, or a share glyph. The row only draws; the
+// the row does at its end — a value, an accent label for an action, a share glyph, or nothing when a control
+// sits on its own line under it. The row only draws; the
 // Button or ShareLink around it decides what a tap does, so a row can never act on its own.
 import SwiftUI
 
@@ -13,6 +14,8 @@ struct SettingsRow: View {
         case share
         /// A quiet line that stands in for rows that do not exist yet.
         case placeholder
+        /// Just a label, for a control drawn on its own line under the row.
+        case label
     }
 
     var systemImage: String? = nil
@@ -61,7 +64,7 @@ struct SettingsRow: View {
 
     private var titleColor: Color {
         switch kind {
-        case .value, .share: RoomyColor.textPrimary
+        case .value, .share, .label: RoomyColor.textPrimary
         case .action: RoomyColor.accent
         case .placeholder: RoomyColor.textSecondary
         }

@@ -71,33 +71,6 @@ nonisolated struct DashboardSummary {
         return "\(indexProgress.scanned.formatted()) of \(indexProgress.total.formatted()) photos"
     }
 
-    /// The progress bar shows only with real counts behind it; without them it would sit at a made-up zero.
+    /// The bottom capsule fills only with real counts behind it; without them it would sit at a made-up zero.
     var hasProgressCounts: Bool { phase == .comparing ? hashProgress.total > 0 : indexProgress.total > 0 }
-
-    /// The one action on the storage card follows the scan: stop it while it runs, run it again once done,
-    /// and "Resume" when it was stopped, because the photos compared so far are kept. Before any scan the
-    /// bottom button starts one instead.
-    var cardAction: CardAction? {
-        guard canUseLibrary else { return nil }
-        switch phase {
-        case .indexing, .comparing: return .cancel
-        case .done: return .rescan
-        case .stopped: return .resume
-        case .idle: return nil
-        }
-    }
-
-    enum CardAction: Equatable {
-        case cancel
-        case rescan
-        case resume
-
-        var title: String {
-            switch self {
-            case .cancel: "Cancel"
-            case .rescan: "Rescan"
-            case .resume: "Resume"
-            }
-        }
-    }
 }

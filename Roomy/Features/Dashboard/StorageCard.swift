@@ -1,14 +1,13 @@
 // Why: one card answers "how full is this phone and what can go". The headline says the state first, with
 // Roomy perched on the white card below it; the card shows how full in words and as a usage bar, then what
-// can be cleaned up next to the one action that fits the scan (Cancel, Rescan, Resume), and the scan's
-// progress while it runs. Before the first index arrives the amount is a skeleton, and the bar waits for real
-// counts, so nothing made up is ever drawn. At accessibility text sizes rows stack instead of squeezing. Matches the Figma
-// "StorageHeroCard v5" component.
+// can be cleaned up and, while a scan runs, how many photos it has read in words. The card holds no action and
+// no progress bar: the dashboard's bottom capsule is its one action and its one moving bar. Before the first
+// index arrives the amount is a skeleton, so nothing made up is ever drawn. At accessibility text sizes rows
+// stack instead of squeezing. Matches the Figma "StorageHeroCard v5" component in "Dashboard v5 — option A".
 import SwiftUI
 
 struct StorageCard: View {
     let summary: DashboardSummary
-    let onAction: (DashboardSummary.CardAction) -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -90,101 +89,62 @@ struct StorageCard: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: Space.s12) {
-            let layout =
-                isStacked
-                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Space.s12))
-                : AnyLayout(HStackLayout(alignment: .center, spacing: Space.s12))
-            layout {
-                amount
-                if let action = summary.cardAction {
-                    CardActionButton(action: action, isFullWidth: isStacked) { onAction(action) }
-                }
-            }
+            amount
             if summary.isScanning {
-                ScanProgress(
-                    fraction: summary.hasProgressCounts ? summary.progressFraction : nil, text: summary.progressText)
+                Text(summary.progressText)
+                    .font(RoomyFont.footnote)
+                    .foregroundStyle(RoomyColor.textSecondary)
+                    .contentTransition(.numericText())
+                    .animation(Motion.snappy, value: summary.progressText)
             }
         }
         .padding(.leading, Space.s16)
         .padding(.trailing, Space.s12)
-        .padding(.vertical, Space.s12)
+        .padding(.top, Space.s12)
+        .padding(.bottom, Layout.heroFooterBottom)
     }
 
+    /// The amount on the left and what it means on the right, so the footer spans the card now that the scan
+    /// action lives in the bottom capsule. When the two don't fit on one line (large text) they stack.
     private var amount: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .leading) {
-                if summary.isAmountPending {
-                    SkeletonShape(
-                        width: Layout.heroValueSkeleton.width, height: Layout.heroValueSkeleton.height,
-                        cornerRadius: Radius.grid
-                    )
-                    .transition(.opacity)
-                } else {
-                    Text(summary.heroValue)
-                        .font(RoomyFont.amount)
-                        .foregroundStyle(RoomyColor.textPrimary)
-                        .contentTransition(.numericText())
-                        .transition(.opacity)
-                }
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: Space.s12) {
+                amountValue
+                Spacer(minLength: 0)
+                amountCaption.multilineTextAlignment(.trailing)
             }
-            .animation(Motion.quick, value: summary.isAmountPending)
-            .animation(Motion.snappy, value: summary.heroValue)
-            Text(summary.heroCaption)
-                .font(RoomyFont.footnote)
-                .foregroundStyle(RoomyColor.textSecondary)
+            VStack(alignment: .leading, spacing: 0) {
+                amountValue
+                amountCaption
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
-}
 
-/// Resume is the one prominent action (unfinished work); Cancel and Rescan stay quiet.
-private struct CardActionButton: View {
-    let action: DashboardSummary.CardAction
-    let isFullWidth: Bool
-    let perform: () -> Void
-
-    private var isProminent: Bool { action == .resume }
-
-    var body: some View {
-        Button(action: perform) {
-            Text(action.title)
-                .font(RoomyFont.subheadlineSemibold)
-                .foregroundStyle(isProminent ? RoomyColor.onAccent : RoomyColor.accent)
-                .padding(.horizontal, Space.s16)
-                .frame(maxWidth: isFullWidth ? .infinity : nil, minHeight: Layout.tapTarget)
-                .background(isProminent ? RoomyColor.accent : RoomyColor.accentTint, in: Capsule())
+    private var amountValue: some View {
+        ZStack(alignment: .leading) {
+            if summary.isAmountPending {
+                SkeletonShape(
+                    width: Layout.heroValueSkeleton.width, height: Layout.heroValueSkeleton.height,
+                    cornerRadius: Radius.grid
+                )
+                .transition(.opacity)
+            } else {
+                Text(summary.heroValue)
+                    .font(RoomyFont.amount)
+                    .foregroundStyle(RoomyColor.textPrimary)
+                    .contentTransition(.numericText())
+                    .transition(.opacity)
+            }
         }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct ScanProgress: View {
-    /// nil until there are real counts to fill the bar with.
-    let fraction: Double?
-    let text: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.s8) {
-            if let fraction { bar(fraction) }
-            Text(text)
-                .font(RoomyFont.footnote)
-                .foregroundStyle(RoomyColor.textSecondary)
-        }
-        .animation(Motion.progress, value: fraction)
+        .animation(Motion.quick, value: summary.isAmountPending)
+        .animation(Motion.snappy, value: summary.heroValue)
     }
 
-    private func bar(_ fraction: Double) -> some View {
-        GeometryReader { proxy in
-            Capsule()
-                .fill(RoomyColor.ringTrack)
-                .overlay(alignment: .leading) {
-                    Capsule()
-                        .fill(RoomyColor.accent)
-                        .frame(width: proxy.size.width * fraction)
-                }
-        }
-        .frame(height: Layout.progressBarHeight)
-        .accessibilityHidden(true)
+    private var amountCaption: some View {
+        Text(summary.heroCaption)
+            .font(RoomyFont.subheadline)
+            .foregroundStyle(RoomyColor.textSecondary)
     }
 }

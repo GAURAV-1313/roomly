@@ -14,6 +14,8 @@ extension Layout {
     static let settingsSectionSpacing: CGFloat = 10
     /// The extra room above a section header, so sections read as groups.
     static let settingsHeaderTop: CGFloat = 14
+    /// The room under a control that sits on its own line in a Settings card, such as the Appearance picker.
+    static let settingsPickerBottom: CGFloat = 14
     /// The gap between the points of "How deletion works".
     static let deletionPointSpacing: CGFloat = 14
     /// The hairline between rows of a Settings card.

@@ -33,6 +33,9 @@ enum Layout {
     /// Scroll content keeps this much room at the bottom so nothing rests under the floating bar.
     static let bottomBarClearance: CGFloat = 96
     static let bottomBarHeight: CGFloat = 56
+    /// The round button beside the Review capsule: its progress ring sits this far in, at this line width.
+    static let roundActionRingInset: CGFloat = 5
+    static let roundActionRingLine: CGFloat = 3
     static let tapTarget: CGFloat = 44
     static let photoTileSize: CGFloat = 96
     static let screenshotColumns = 4
@@ -41,6 +44,8 @@ enum Layout {
     static let heroInset: CGFloat = 8
     static let heroTopInset: CGFloat = 14
     static let heroPerch: CGFloat = 8
+    /// The room under the storage card's footer, a little more than above it so the last line settles.
+    static let heroFooterBottom: CGFloat = 14
     /// The barcode usage bar: tick width, the pitch it aims for, and its height.
     static let usageTickWidth: CGFloat = 3
     static let usageTickPitch: CGFloat = 6

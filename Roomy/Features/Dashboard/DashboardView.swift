@@ -1,7 +1,7 @@
 // Why: the hub. "Roomy" and Settings share the top row and scroll away with the content, so the title never
 // sits a level below the button. Then one storage card (Roomy, how full, what can go), anything that needs
-// attention, and the categories as a grid of tiles showing their own content, with the glass capsule as the
-// one action. No tab bar: the categories feed one shared Review, so they are drill-downs, not separate places.
+// attention, and the categories as a grid of tiles showing their own content, with one state-driven glass
+// capsule at the bottom as the one action: scan, cancel, resume, or Review once anything is saved. No tab bar: the categories feed one shared Review, so they are drill-downs, not separate places.
 // All numbers come from DashboardSummary. On its first appearance the blocks fade up in order, and a tile
 // opens its screen by zooming out of itself (iOS 18 and later; a standard push on iOS 17).
 import SwiftUI
@@ -13,6 +13,7 @@ struct DashboardView: View {
     @Namespace private var zoom
     /// Flipped once, on the first appearance, so the fade-up never replays when the person comes back.
     @State private var isShown = false
+    @State private var isReviewing = false
 
     var body: some View {
         let summary = DashboardSummary(app: app)
@@ -21,7 +22,7 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: Space.s12) {
                     header
                     VStack(alignment: .leading, spacing: Space.s20) {
-                        StorageCard(summary: summary, onAction: perform).staggeredAppear(0, isShown: isShown)
+                        StorageCard(summary: summary).staggeredAppear(0, isShown: isShown)
                         DashboardNotices().staggeredAppear(1, isShown: isShown)
                         Text("Clean up")
                             .font(RoomyFont.title3)
@@ -36,7 +37,8 @@ struct DashboardView: View {
                 }
                 .padding(.top, Space.s4)
                 .padding(.horizontal, Space.margin)
-                .padding(.bottom, Layout.bottomBarClearance)
+                // The capsule is a safe-area bar, so the scroll view already stops above it; this is breathing room.
+                .padding(.bottom, Space.s20)
             }
             .background(RoomyColor.bg)
             // With no bar, content would scroll under the status bar; a strip of the background keeps it legible.
@@ -52,8 +54,10 @@ struct DashboardView: View {
             .navigationTitle("Roomy")
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Route.self, destination: destination)
-            .bottomBar { scanButton }
-            .reviewBar(isProminent: false)
+            .bottomBar { actionBar(summary) }
+            .sheet(isPresented: $isReviewing) {
+                ReviewSheet().environment(app)
+            }
             .onAppear { isShown = true }
             .task { app.startScansIfNeeded() }
             // Not the phase: a stopped comparison's index is read again without leaving `.stopped`.
@@ -116,20 +120,17 @@ struct DashboardView: View {
         .staggeredAppear(3 + index, isShown: isShown)
     }
 
-    private func perform(_ action: DashboardSummary.CardAction) {
-        switch action {
-        case .cancel: app.scan.cancel()
-        case .rescan, .resume: app.rescan()
-        }
+    private func actionBar(_ summary: DashboardSummary) -> some View {
+        let review = app.review
+        let model = DashboardBottomAction(
+            summary: summary, reviewTitle: review.barTitle, isReviewReady: !review.ready.isEmpty)
+        return DashboardActionBar(model: model, onScan: perform) { isReviewing = true }
     }
 
-    @ViewBuilder
-    private var scanButton: some View {
-        if app.review.ready.isEmpty && app.scan.phase == .idle && app.photoAccess.state.canUse {
-            Button("Scan for space", action: app.rescan)
-                .buttonStyle(.roomyPrimary)
-                .padding(.horizontal, Space.margin)
-                .padding(.bottom, Space.s12)
+    private func perform(_ scan: DashboardBottomAction.Scan) {
+        switch scan {
+        case .cancel: app.scan.cancel()
+        case .start, .resume, .again: app.rescan()
         }
     }
 

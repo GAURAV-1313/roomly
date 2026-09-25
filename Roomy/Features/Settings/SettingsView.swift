@@ -1,5 +1,6 @@
-// Why: the honest place to see what Roomy can access, rescan, reset the cache, get back contact backups,
-// and read how deletion actually works on iOS. Nothing here deletes anything, so nothing here is red.
+// Why: the honest place to see what Roomy can access, choose light or dark, rescan, reset the cache, get back
+// contact backups, and read how deletion actually works on iOS. Access stays first because it is what blocks
+// the app; Display follows it as a one-time preference, above the Scan actions. Nothing here deletes anything, so nothing here is red.
 import SwiftUI
 
 struct SettingsView: View {
@@ -9,6 +10,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Layout.settingsSectionSpacing) {
                 accessSection
+                displaySection
                 scanSection
                 backupsSection
                 deletionSection
@@ -38,6 +40,12 @@ struct SettingsView: View {
             .padding(.horizontal, Space.s16)
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s16)
+        }
+    }
+
+    private var displaySection: some View {
+        SettingsSection("Display", footer: "System follows your iPhone’s Light or Dark setting.") {
+            AppearancePicker()
         }
     }
 
