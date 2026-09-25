@@ -5,13 +5,16 @@ and removes them only after you review them. Everything runs on the phone; nothi
 no account.
 
 Built for the AppFactory App Builder selection task. iOS 17+, SwiftUI, Swift 6, no third-party packages.
-The mascot is Roomy, a small robin that perches on the storage ring and reacts to what the app is doing.
+The mascot is Roomy, a small robin that sits on the storage card and reacts to what the app is doing.
 
-![Screens](design/screens-overview.png)
+| Light | Dark |
+|---|---|
+| ![Dashboard, light](design/app-dashboard.png) | ![Dashboard, dark](design/app-dashboard-dark.png) |
 
 ## Build and run
 
-Requirements: Xcode 26.3+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+Requirements: Xcode 26.3+ (Xcode 27 to run on an iPhone with iOS 27) and
+[XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```bash
 xcodegen generate          # creates Roomy.xcodeproj from project.yml
@@ -20,22 +23,27 @@ open Roomy.xcodeproj
 
 - **Simulator:** pick any iPhone simulator and Run. To get test data, drag photos into the simulator or use
   `xcrun simctl addmedia booted <files>` (images, videos and `.vcf` contacts all work).
-- **iPhone with a free Apple ID:** Roomy target → Signing & Capabilities → Team = your Personal Team, and
-  change the bundle id if `com.gauravsingh.roomy` is taken. Free provisioning expires after 7 days; run again
-  from Xcode to renew. See [docs/DEVICE.md](docs/DEVICE.md).
-- **Checks:** `scripts/check.sh` runs the architecture rules, `swift-format` lint, a zero-warning build and
-  the unit tests. `scripts/check.sh --fast` skips the build.
+- **iPhone with a free Apple ID:** `cp Signing.local.xcconfig.example Signing.local.xcconfig` and put your team
+  ID in it (and your own bundle id if `com.gauravsingh.roomy` is taken). The file is ignored by git and survives
+  `xcodegen generate`, which would erase a team picked in Xcode. Free provisioning expires after 7 days; run
+  again from Xcode to renew. Target device: iPhone 16 on iOS 27. See [docs/DEVICE.md](docs/DEVICE.md).
+- **Checks:** `scripts/check.sh` runs the architecture rules, `swift-format` lint, a zero-warning simulator
+  build, the unit tests (274) and an unsigned iPhone build that fails on any warning. `scripts/check.sh --fast`
+  skips the builds.
 
 ## What it does
 
 | Area | How |
 |---|---|
-| Storage dashboard | Free / used from `volumeAvailableCapacityForImportantUsage` (the closest API to Settings); a usage bar with Roomy the robin perched above it; reclaimable space found by the scan |
+| Onboarding | Three pages: an animated welcome (a storage bar fills, turns red, then sweeps down as Roomy lands), how it works, and permissions in every state; Skip never passes the permissions page. No login or account: the brief puts them out of scope and nothing leaves the phone |
+| Storage dashboard | Free / used from `volumeAvailableCapacityForImportantUsage` (the closest API to Settings), shown as "92% full" and a tick bar; what the scan can clean up; one bottom capsule that is always the next action: Scan for space, Cancel scan (with progress), Resume scan, Scan again, or Review |
 | Similar photos | 64-bit difference hash per photo; every burst frame grouped by its burst id; duplicates across the whole library (Hamming ≤ 4, every such pair found with 5 LSH bands, crowded bands split again), near-identical shots only within one moment (first to last shot ≤ 60 s, same aspect, Hamming ≤ 10); flat frames (dark, white, blank) never linked on their hash; union-find into groups labelled by what holds for every member; a keeper picked by favourite, the burst pick, resolution, sharpness (Laplacian variance), then size — and you can make any photo the keeper; other favourites and picked burst frames are never selected in bulk |
 | Screenshots | The Photos screenshot subtype, in a month-grouped 9:16 grid |
 | Large videos | Sorted by real on-disk size, with an inline player |
 | Duplicate contacts | Cards are linked only by a shared phone number (international form, read in the phone's region; an extension is part of the number, so two extensions of one line are two people) or email (case); a shared name alone never groups cards; a value on more than 3 cards links them only when their names agree, so exact copies are found and switchboards are not; the label shows the weakest link; merge preview shows every value and where it comes from |
-| Review and delete | One basket across all categories → Review → one red button → confirmation → iOS's own Photos prompt |
+| Review and delete | One basket across all categories → Review → one red glass Delete button → confirmation → iOS's own Photos prompt. The Delete button never sits where the Review capsule was tapped, so a double tap can't reach it |
+| Result | The amount moved, a usage bar with a pin: amber "in Recently Deleted" until free space is measured again, then green "now free" |
+| Settings | Photos and Contacts access, rescan, contact backups, how deletion works, and Appearance (System, Light, Dark) |
 | Permissions | Photos and Contacts each handle not-asked, limited, denied and restricted, with a way forward in every state |
 
 ## Decisions and tradeoffs
@@ -64,9 +72,17 @@ open Roomy.xcodeproj
   duplicates, so it explains that instead of showing a misleadingly short list.
 - **File sizes via `PHAssetResource` KVC.** There is no public size API; every cleaner reads `fileSize` this
   way. It is optional everywhere: unknown sizes read "size unavailable" and never count as a guess.
-- **Designed in Figma first** ([file](https://www.figma.com/design/vkLwPMTONVGAW83m8B1oK8)): iOS 26 Liquid
-  Glass only in the navigation layer (bars, the review capsule, primary buttons), opaque content, one
-  `RoomyGlass` modifier with the iOS 17/18 fallback.
+- **Designed in Figma first** ([file](https://www.figma.com/design/vkLwPMTONVGAW83m8B1oK8)): every screen,
+  loading state and animation was designed and approved there before it was built. iOS 26 Liquid Glass only in
+  the navigation layer (bars, capsules, primary buttons), opaque content, one `RoomyGlass` modifier with the
+  iOS 17/18 fallback. On iOS 27 the system re-tunes glass on its own; nothing relies on its transparency.
+- **The moved amount is a labelled pin, not an arc.** A cleanup usually moves under 1% of the phone, which a
+  ring or bar can't draw honestly, so the result marks the used/free boundary and states the amount in words.
+- **Calm motion, always optional.** Skeletons shaped like the real layout (shown only if loading takes over
+  0.3 s), a zoom from each category tile into its screen (iOS 18+), a staggered dashboard, and the welcome
+  story. Every animation has a Reduce Motion fallback, and timings live in one `Motion` token file.
+- **Light, dark and tinted.** Every colour is a light/dark pair, the app icon has dark and tinted versions,
+  and Settings can override the system appearance.
 
 ## Architecture
 
