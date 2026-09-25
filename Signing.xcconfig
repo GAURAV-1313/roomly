@@ -1,0 +1,5 @@
+// Why: the Xcode project is generated from project.yml, so a team picked in Xcode's Signing tab is lost on the next
+// `xcodegen generate`. Each developer's team, and a bundle id of their own if a free team needs one, live in
+// Signing.local.xcconfig instead, which git ignores: copy Signing.local.xcconfig.example and fill it in.
+PRODUCT_BUNDLE_IDENTIFIER = com.gauravsingh.roomy
+#include? "Signing.local.xcconfig"

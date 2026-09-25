@@ -9,3 +9,6 @@ build/
 .agents/
 .aider-desk/
 skills-lock.json
+
+# Each developer's signing team
+Signing.local.xcconfig

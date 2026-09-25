@@ -1,0 +1,5 @@
+// Copy to Signing.local.xcconfig (ignored by git) and set your own team.
+// Find the ID in Xcode → Settings → Accounts → your Apple ID → the team's ID, or on developer.apple.com.
+DEVELOPMENT_TEAM = YOURTEAMID
+// A free Personal Team needs a bundle identifier nobody else has used; change it here if Xcode says it's taken.
+// PRODUCT_BUNDLE_IDENTIFIER = com.yourname.roomy

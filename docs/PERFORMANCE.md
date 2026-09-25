@@ -42,7 +42,7 @@ strongest evidence wins; a regression test pins it).
 - **Nothing blocks the UI**: the scan runs off the main actor and streams progress; the dashboard fills in
   while it runs, and a newer scan cancels an older one.
 
-## Still to measure on the iPhone 15
+## Still to measure on the iPhone 16
 
 Real libraries add iCloud-only originals (skipped, never downloaded), HEIC decoding and Photos' own
 thumbnail cache. Extrapolating the simulator numbers gives roughly 45 s for a first scan of 20,000 photos
@@ -55,7 +55,7 @@ and "Optimize iPhone Storage" on, an original can live only in iCloud while Phot
 size. The rule is in `AssetSize.measure` and is unit-tested: a file Photos marks as not on the phone is
 labelled "in iCloud" and left out of Reclaimable, the Review total and the Recently Deleted check; a file whose
 availability Photos doesn't report counts as on the phone. The simulator has no iCloud library, so on the
-iPhone 15 with Optimize Storage on:
+iPhone 16 with Optimize Storage on:
 
 1. Find a large video that Photos shows downloading when you open it (an iCloud-only original).
 2. In Roomy, its row should read "in iCloud", and the Large Videos and Reclaimable totals should not include it.
@@ -66,7 +66,7 @@ iPhone 15 with Optimize Storage on:
 
 The index enumerates every burst frame (`includeAllBurstAssets`), and every fetch by id (sizes, hash tiles,
 thumbnails, the deleter's before-and-after checks) uses the same options through `PHFetchOptions.matchingIndex`.
-The simulator has no bursts, so on the iPhone 15:
+The simulator has no bursts, so on the iPhone 16:
 
 1. Shoot a burst of about ten frames and pick two of them in Photos.
 2. In Roomy, the burst should appear as one "Burst" group with a picked frame as the keeper, the other picked

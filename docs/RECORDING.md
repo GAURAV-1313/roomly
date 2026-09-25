@@ -1,4 +1,4 @@
-# Screen recording script (2–3 minutes, iPhone 15)
+# Screen recording script (2–3 minutes, iPhone 16)
 
 Privacy first: Roomy set to **Limited Access** with only a throwaway test album selected (or a test phone),
 test contacts only, Do Not Disturb on. Start the recording from Control Center.

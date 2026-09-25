@@ -23,7 +23,9 @@ nonisolated enum PhotoPermission {
         }
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             let once = ResumeOnce(continuation)
-            PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: presenter) { _ in
+            // @Sendable: PhotosUI may call this off the main thread, and a closure that inherited the main actor
+            // would trap there.
+            PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: presenter) { @Sendable _ in
                 once.resume(returning: ())
             }
         }

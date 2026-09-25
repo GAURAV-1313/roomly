@@ -86,6 +86,14 @@ if [ "${1:-}" != "--fast" ]; then
     [ $status -eq 0 ] && pass "build and tests pass ($(grep -oE 'Executed [0-9]+ tests' "$log" | tail -1))" \
         || fail "build or tests failed:\n$(grep -E '(: error:|error: |Test Case .* failed|\*\* .* FAILED \*\*|crashed)' "$log" | head -20)"
     [ -z "$warnings" ] && pass "zero compiler warnings" || fail "warnings:\n$warnings"
+    # A real iPhone build, unsigned: device-only settings and simulator-only code paths show up only here, and
+    # project-level warnings (Info.plist, orientations) carry no file path, so every warning line counts.
+    xcodebuild -project Roomy.xcodeproj -scheme Roomy -sdk iphoneos -configuration Debug \
+        -skipMacroValidation build CODE_SIGNING_ALLOWED=NO >"$log" 2>&1
+    status=$?
+    warnings=$(grep -E 'warning:' "$log" | grep -v 'Metadata extraction skipped' | sort -u)
+    [ $status -eq 0 ] && pass "iPhone (device) build" || fail "device build failed:\n$(grep -E 'error:' "$log" | head -20)"
+    [ -z "$warnings" ] && pass "zero device build warnings" || fail "device build warnings:\n$warnings"
     rm -f "$log"
 fi
 

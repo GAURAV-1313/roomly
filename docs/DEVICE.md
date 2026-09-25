@@ -1,10 +1,24 @@
 # Running Roomy on an iPhone (free Apple ID)
 
+Tested target: iPhone 16 on iOS 27. The app supports iOS 17 and later.
+
+## Before you start
+
+- **Xcode must know your iOS version.** An iPhone on iOS 27 needs an Xcode that supports iOS 27 (Xcode 27 or
+  later). With an older Xcode, the run destination says the iOS version is not supported: update Xcode from the
+  App Store, then run `scripts/check.sh` once to confirm everything still builds.
+- **Your own Apple ID must be in Xcode:** Xcode → Settings → Accounts → **+** → Apple ID. Sign in yourself; this
+  creates your free **Personal Team**.
+
+## Steps
+
 1. Connect the iPhone with a cable, unlock it, and tap **Trust** if asked.
 2. On the iPhone: Settings → Privacy & Security → **Developer Mode** → on (the phone restarts).
-3. `xcodegen generate && open Roomy.xcodeproj`
-4. Select the **Roomy** target → Signing & Capabilities → Team: your **Personal Team**. If Xcode says the
-   bundle id is unavailable, change `com.gauravsingh.roomy` to something unique (for example `com.<you>.roomy`).
+3. Set your signing team once: `cp Signing.local.xcconfig.example Signing.local.xcconfig`, then put your team ID
+   in it (Xcode → Settings → Accounts → your Apple ID shows it). This file is ignored by git and survives
+   `xcodegen generate`, which would erase a team picked in Xcode's Signing tab. If Xcode says the bundle id is
+   taken, set `PRODUCT_BUNDLE_IDENTIFIER = com.<you>.roomy` in the same file.
+4. `xcodegen generate && open Roomy.xcodeproj`
 5. Pick the iPhone as the run destination and press Run.
 6. First launch only: Settings → General → VPN & Device Management → your Apple ID → **Trust**.
 

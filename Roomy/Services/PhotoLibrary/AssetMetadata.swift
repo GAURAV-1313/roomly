@@ -56,14 +56,25 @@ nonisolated enum AssetMetadata {
         PHAssetResource.assetResources(for: asset).first?.originalFilename
     }
 
-    /// Read without a getter check: every size in the app comes from this key, and a check that misjudged how
-    /// Photos stores it would silently turn every size into "size unavailable".
+    /// Asking for a key an object doesn't have raises an Objective-C exception Swift can't catch, and a new iOS
+    /// may rename this undocumented one. KVC finds a key through a getter or a backing ivar, so both are checked:
+    /// only if neither exists does the size read as unavailable instead of crashing the scan.
     private static func bytes(of resource: PHAssetResource) -> Int64? {
+        guard hasFileSizeKey else { return nil }
         let value = resource.value(forKey: "fileSize")
         if let bytes = value as? Int64 { return bytes }
         if let bytes = value as? Int { return Int64(bytes) }
         return nil
     }
+
+    /// Checked once: the class, not each resource, decides whether the key exists.
+    private static let hasFileSizeKey: Bool = {
+        let type: AnyClass = PHAssetResource.self
+        let getter = class_getInstanceMethod(type, NSSelectorFromString("fileSize")) != nil
+        let ivarNames: [String] = ["_fileSize", "fileSize"]
+        let ivar = ivarNames.contains { class_getInstanceVariable(type, $0) != nil }
+        return getter || ivar
+    }()
 
     /// False for an original that "Optimize iPhone Storage" keeps only in iCloud; nil when Photos doesn't say.
     /// Asking for a key an object doesn't have raises an Objective-C exception, which Swift can't catch, so the

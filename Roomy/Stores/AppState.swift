@@ -34,6 +34,9 @@ final class AppState {
         watcher = LibraryWatcher(
             scan: scan, source: libraryChanges, canUseLibrary: { access.state.canUse },
             isCleaningUp: { cleanup.isWorking })
+        // With access already granted, the scan starts here rather than when the dashboard appears, so its first
+        // frame shows the scan running instead of flashing "Not scanned yet".
+        startScansIfNeeded()
     }
 
     /// Duplicate contacts need the whole address book; a partial view would miss most duplicates.

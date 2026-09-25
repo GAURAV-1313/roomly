@@ -40,6 +40,8 @@
 		<key>UIImageName</key>
 		<string>LaunchRoomy</string>
 	</dict>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
