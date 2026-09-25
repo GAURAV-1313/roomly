@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "lineLength": 120,
+  "indentation": { "spaces": 4 },
+  "tabWidth": 4,
+  "maximumBlankLines": 1,
+  "respectsExistingLineBreaks": true,
+  "lineBreakBeforeEachArgument": false,
+  "indentSwitchCaseLabels": false,
+  "multiElementCollectionTrailingCommas": true,
+  "rules": {
+    "AllPublicDeclarationsHaveDocumentation": false,
+    "AlwaysUseLowerCamelCase": true,
+    "DoNotUseSemicolons": true,
+    "FileScopedDeclarationPrivacy": true,
+    "GroupNumericLiterals": true,
+    "NeverForceUnwrap": true,
+    "NeverUseForceTry": true,
+    "NeverUseImplicitlyUnwrappedOptionals": true,
+    "NoBlockComments": true,
+    "OneVariableDeclarationPerLine": true,
+    "OrderedImports": true,
+    "ReplaceForEachWithForLoop": true,
+    "UseLetInEveryBoundCaseVariable": true,
+    "UseShorthandTypeNames": true,
+    "UseTripleSlashForDocumentationComments": true,
+    "UseEarlyExits": false,
+    "UseWhereClausesInForLoops": false,
+    "OmitExplicitReturns": false,
+    "ValidateDocumentationComments": false,
+    "BeginDocumentationCommentWithOneLineSummary": false
+  }
+}

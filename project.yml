@@ -1,0 +1,69 @@
+name: Roomy
+options:
+  bundleIdPrefix: com.gauravsingh
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+targets:
+  Roomy:
+    type: application
+    platform: iOS
+    sources:
+      - path: Roomy
+    info:
+      path: Roomy/Info.plist
+      properties:
+        CFBundleDisplayName: Roomy
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchRoomy
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSPhotoLibraryUsageDescription: "Roomy scans the photo library on this phone to find similar photos, screenshots and large videos. Nothing leaves your device, and nothing is deleted without your approval."
+        NSContactsUsageDescription: "Roomy reads your contacts on this phone to find duplicate cards you can merge. Nothing leaves your device."
+        PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gauravsingh.roomy
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+  RoomyTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RoomyTests
+    dependencies:
+      - target: Roomy
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+schemes:
+  Roomy:
+    build:
+      targets:
+        Roomy: all
+        RoomyTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [RoomyTests]
