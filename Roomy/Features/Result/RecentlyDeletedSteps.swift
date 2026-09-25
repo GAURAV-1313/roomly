@@ -31,11 +31,9 @@ struct RecentlyDeletedSteps: View {
             Image(systemName: "trash")
                 .font(RoomyFont.subheadlineSemibold)
                 .dynamicTypeSize(...DynamicTypeSize.xLarge)
-                .foregroundStyle(RoomyColor.warning)
+                .foregroundStyle(RoomyColor.textPrimary)
                 .frame(width: Layout.noticeIcon, height: Layout.noticeIcon)
-                .background(
-                    RoomyColor.warningSoft, in: RoundedRectangle(cornerRadius: Radius.thumb, style: .continuous)
-                )
+                .background(RoomyColor.chip, in: RoundedRectangle(cornerRadius: Radius.grid, style: .continuous))
                 .accessibilityHidden(true)
             Text("Finish in Photos")
                 .font(RoomyFont.headline)

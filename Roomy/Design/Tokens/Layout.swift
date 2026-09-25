@@ -50,13 +50,11 @@ enum Layout {
     static let usageTickWidth: CGFloat = 3
     static let usageTickPitch: CGFloat = 6
     static let usageBarHeight: CGFloat = 28
-    /// The pin that marks moved space on the result's storage bar (Figma "StorageHero v6"): stem length, line
-    /// width, dash, head and tag dot.
-    static let pinStem: CGFloat = 12
-    static let pinLine: CGFloat = 1.5
-    static let pinDash: CGFloat = 2
-    static let pinHead: CGFloat = 7
-    static let pinDot: CGFloat = 8
+    /// The marker tick on the result's storage bar (Figma "Premium details" marker): its width, how far it rises
+    /// above the ticks, and its outline while the space is still pending.
+    static let markerWidth: CGFloat = 5
+    static let markerRise: CGFloat = 8
+    static let markerLine: CGFloat = 1.5
     /// The scan progress bar on the storage card.
     static let progressBarHeight: CGFloat = 6
     /// Category tiles (Figma "CategoryTile v5"): the inset around the preview well and the well's height.
@@ -79,6 +77,8 @@ enum Layout {
     static let gateWellHeight: CGFloat = 150
     /// A small capsule button (Figma "QuietCapsule v5", Size=small).
     static let smallButtonHeight: CGFloat = 36
+    /// The status dot on a notice row's icon chip.
+    static let noticeDot: CGFloat = 7
     /// The icon square at the start of a notice row.
     static let noticeIcon: CGFloat = 32
     /// Soft shadow under dashboard cards: SwiftUI's radius is about half Figma's 8-point blur; downward offset.

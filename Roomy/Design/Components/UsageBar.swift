@@ -83,7 +83,12 @@ nonisolated struct UsageTicks: Equatable {
 
     func isUsed(_ index: Int) -> Bool { index < used }
 
-    /// The x position between the last used tick and the first free one: where a pin marks the boundary.
+    /// The centre of the last used tick, where a marker stands. The first tick's centre when nothing is used.
+    var lastUsedCenterX: CGFloat {
+        CGFloat(max(used - 1, 0)) * (tickWidth + spacing) + tickWidth / 2
+    }
+
+    /// The x position between the last used tick and the first free one.
     var boundaryX: CGFloat {
         guard used > 0 else { return 0 }
         guard used < count else { return CGFloat(count) * tickWidth + CGFloat(count - 1) * spacing }
@@ -94,15 +99,6 @@ nonisolated struct UsageTicks: Equatable {
         guard isUsed(index) else { return Self.freeOpacity }
         guard used > 1 else { return 1 }
         return Self.faintestUsed + (1 - Self.faintestUsed) * Double(index) / Double(used - 1)
-    }
-}
-
-extension UsageTicks {
-    /// The used/free boundary for a bar of `width` drawn with the standard tick metrics.
-    static func boundary(width: CGFloat, usedFraction: Double) -> CGFloat {
-        UsageTicks(
-            width: width, usedFraction: usedFraction, tickWidth: Layout.usageTickWidth, pitch: Layout.usageTickPitch
-        ).boundaryX
     }
 }
 

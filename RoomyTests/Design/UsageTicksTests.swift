@@ -41,4 +41,10 @@ final class UsageTicksTests: XCTestCase {
         XCTAssertEqual(ticks(0).boundaryX, 0)
         XCTAssertEqual(ticks(1).boundaryX, 305, accuracy: 0.001)
     }
+
+    func testTheMarkerStandsOnTheLastUsedTick() {
+        let bar = ticks(0.5)
+        XCTAssertEqual(bar.lastUsedCenterX, CGFloat(bar.used - 1) * (3 + bar.spacing) + 1.5, accuracy: 0.001)
+        XCTAssertEqual(ticks(0).lastUsedCenterX, 1.5, accuracy: 0.001)
+    }
 }

@@ -1,6 +1,7 @@
 // Why: a notice is one more card on the dashboard, not an alarm: the same white card as the category tiles, a
-// small tinted icon, one line of explanation and the way to act on it at the end. The whole row is the button,
-// so it stays short. Amber is kept for "finish the job" and appears only in its icon.
+// small ink icon on a neutral chip, one line of explanation and the way to act on it at the end. The whole row is
+// the button, so it stays short. Colour is only a small status dot on the chip — amber for "finish the job", green
+// for space measured as free — so the icon never outshouts the title or reads as a warning.
 import SwiftUI
 
 struct NoticeRow: View {
@@ -17,13 +18,8 @@ struct NoticeRow: View {
             }
         }
 
-        var fill: Color {
-            switch self {
-            case .info: RoomyColor.accentSoft
-            case .warning: RoomyColor.warningSoft
-            case .success: RoomyColor.successSoft
-            }
-        }
+        /// Info notices carry no status dot; the others show their colour only there.
+        var hasStatusDot: Bool { self != .info }
     }
 
     enum Accessory {
@@ -78,11 +74,21 @@ struct NoticeRow: View {
     private var icon: some View {
         Image(systemName: systemImage)
             .font(RoomyFont.subheadlineSemibold)
-            // The square has a fixed size, so its glyph stops growing where it would spill out.
+            // The chip has a fixed size, so its glyph stops growing where it would spill out.
             .dynamicTypeSize(...DynamicTypeSize.xLarge)
-            .foregroundStyle(tone.tint)
+            .foregroundStyle(RoomyColor.textPrimary)
             .frame(width: Layout.noticeIcon, height: Layout.noticeIcon)
-            .background(tone.fill, in: RoundedRectangle(cornerRadius: Radius.thumb, style: .continuous))
+            .background(RoomyColor.chip, in: RoundedRectangle(cornerRadius: Radius.grid, style: .continuous))
+            .overlay(alignment: .topTrailing) {
+                if tone.hasStatusDot {
+                    Circle()
+                        .fill(tone.tint)
+                        .frame(width: Layout.noticeDot, height: Layout.noticeDot)
+                        .padding(Space.s2)
+                        .background(RoomyColor.card, in: Circle())
+                        .offset(x: Space.s4, y: -Space.s4)
+                }
+            }
             .accessibilityHidden(true)
     }
 

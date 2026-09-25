@@ -12,6 +12,9 @@ final class StorageResultTests: XCTestCase {
         let freed = StorageMarker.freed(2_100_000_000)
         XCTAssertEqual(freed.text, "\(Int64(2_100_000_000).byteString) now free")
         XCTAssertFalse(freed.isPending)
+        XCTAssertEqual(pending.amount, Int64(2_100_000_000).byteString)
+        XCTAssertEqual(pending.words, "in Recently Deleted")
+        XCTAssertEqual(freed.words, "now free")
     }
 
     func testUsageReadsTheSameOnTheResultAsOnTheDashboard() {
