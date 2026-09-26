@@ -1,6 +1,8 @@
-// Why: a merge is approved by reading its result, so each group shows the card it will become — every phone
-// and email, with values from the other cards tagged, and whether it moves data between accounts — before
-// anything is selected. Selected groups get the accent ring and a prominent button, like selected videos.
+// Why: a merge is approved by reading both what goes in and what comes out. Each group lists the cards being
+// folded together, numbered, with the values that tie them marked (device test: "only one card is visible"),
+// then the card it will become — every phone and email, each added value naming the card it comes from — and
+// whether it moves data between accounts, before anything is selected. Selected groups get the accent ring and
+// a prominent button, like selected videos. Figma "Fix 1 · Duplicate Contacts".
 import SwiftUI
 
 struct ContactGroupCard: View {
@@ -9,12 +11,15 @@ struct ContactGroupCard: View {
     let isSelected: Bool
     let onToggle: () -> Void
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// Whether the cards past the first three show; UI-only, kept while the card is on screen.
+    @State private var isShowingAllMembers = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s12) {
-            header
-            mergedFields
+            ContactGroupHeader(name: preview.name, reason: group.reason.label, cardCount: group.members.count)
+            memberCards
+            afterMerging
             selectButton
         }
         .padding(Space.s12)
@@ -23,49 +28,62 @@ struct ContactGroupCard: View {
         .selectedRing(isSelected)
     }
 
-    /// At accessibility sizes the reason tag moves under the name instead of squeezing it.
-    private var header: some View {
-        let isStacked = dynamicTypeSize.isAccessibilitySize
-        return HStack(alignment: isStacked ? .top : .center, spacing: Space.s12) {
-            avatar
-            VStack(alignment: .leading, spacing: Space.s2) {
-                Text(preview.name.isEmpty ? "No name" : preview.name)
-                    .font(RoomyFont.headline)
-                    .foregroundStyle(RoomyColor.textPrimary)
-                Text("\(group.members.count) cards")
-                    .font(RoomyFont.footnote)
-                    .foregroundStyle(RoomyColor.textSecondary)
-                if isStacked {
-                    ReasonChip(text: group.reason.label, tint: Route.duplicateContacts.categoryTintSoft).padding(
-                        .top, Space.s4)
+    private var memberCards: some View {
+        let list = MemberList(members: preview.members, isExpanded: isShowingAllMembers)
+        return VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(list.visible.enumerated()), id: \.element.number) { index, member in
+                if index > 0 {
+                    separator
                 }
+                MemberCardRow(member: member)
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-            if !isStacked {
-                ReasonChip(text: group.reason.label, tint: Route.duplicateContacts.categoryTintSoft)
+            if let more = list.moreLabel {
+                separator
+                Button(more) {
+                    withAnimation(reduceMotion ? Motion.quick : Motion.disclose) { isShowingAllMembers = true }
+                }
+                .font(RoomyFont.footnoteSemibold)
+                .foregroundStyle(RoomyColor.accent)
+                .frame(minHeight: Layout.tapTarget)
+                .padding(.leading, Layout.memberNumber + Layout.memberNumberGap)
             }
         }
-        .padding([.leading, .top], Space.s4)
+        .padding(.horizontal, Space.s12)
+        .padding(.vertical, Space.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoomyColor.nested, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
     }
 
-    private var avatar: some View {
-        Text(initials)
-            .font(RoomyFont.headline)
-            .foregroundStyle(Route.duplicateContacts.categoryTint)
-            .dynamicTypeSize(...DynamicTypeSize.xLarge)
-            .frame(width: Layout.tapTarget, height: Layout.tapTarget)
-            .background(Route.duplicateContacts.categoryTintSoft, in: Circle())
-            .accessibilityHidden(true)
+    /// Starts past the number circle, so the numbers read as one column.
+    private var separator: some View {
+        RoomyColor.separator
+            .frame(height: Layout.hairline)
+            .padding(.leading, Layout.memberNumber + Layout.memberNumberGap)
+    }
+
+    private var afterMerging: some View {
+        VStack(alignment: .leading, spacing: Space.s8) {
+            Text("After merging")
+                .font(RoomyFont.footnoteSemibold)
+                .foregroundStyle(RoomyColor.textSecondary)
+                .accessibilityAddTraits(.isHeader)
+            mergedFields
+        }
     }
 
     private var mergedFields: some View {
         VStack(alignment: .leading, spacing: Layout.mergePreviewSpacing) {
-            if !preview.organization.isEmpty {
-                MergedFieldRow(label: "Company", value: MergedValue(text: preview.organization, isAdded: false))
+            if let organization = preview.organization {
+                MergedFieldRow(label: "Company", value: organization)
             }
-            ForEach(preview.phones, id: \.self) { MergedFieldRow(label: "Phone", value: $0) }
-            ForEach(preview.emails, id: \.self) { MergedFieldRow(label: "Email", value: $0) }
+            // Keyed by position: a card can hold the same number twice under two labels, so values aren't unique.
+            ForEach(Array(preview.phones.enumerated()), id: \.offset) {
+                MergedFieldRow(label: "Phone", value: $0.element)
+            }
+            ForEach(Array(preview.emails.enumerated()), id: \.offset) {
+                MergedFieldRow(label: "Email", value: $0.element)
+            }
             if group.spansAccounts {
                 note("These cards are in different accounts. The merged card stays in your own account.")
             }
@@ -102,12 +120,6 @@ struct ContactGroupCard: View {
         .controlSize(.small)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityHint(isSelected ? "Removes this merge from Review" : "Adds this merge to Review")
-    }
-
-    private var initials: String {
-        let words = preview.name.split(separator: " ").prefix(2)
-        let letters = words.compactMap(\.first).map { String($0).uppercased() }
-        return letters.isEmpty ? "?" : letters.joined()
     }
 }
 

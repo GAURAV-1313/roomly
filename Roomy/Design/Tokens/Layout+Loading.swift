@@ -8,7 +8,6 @@ extension Layout {
     static let skeletonTextHeight: CGFloat = 10
     /// A skeleton line standing in for a heading.
     static let skeletonTitleHeight: CGFloat = 14
-    static let skeletonTitleWidth: CGFloat = 140
     static let skeletonDetailWidth: CGFloat = 90
     /// The storage card's amount while the first index is read.
     static let heroValueSkeleton = CGSize(width: 96, height: 22)

@@ -1,7 +1,8 @@
 // Why: duplicates are spread across the whole address book, so this screen needs full access and says so
 // plainly in every other state, on a card tinted like the contacts tile, instead of showing a misleadingly
-// short list. Selecting a group only stages the merge; it happens after Review, with a backup first. Select All
-// lives in the bar, like every other category screen, and only while there are groups to select.
+// short list. Selecting a group only stages the merge; it happens after Review, with a backup first. "Select
+// all" sits beside Review, like on every other category screen, and only while there are groups to select. The
+// numbers sit under the title; what a merge carries over, and what it can't, closes the list.
 import SwiftUI
 
 struct DuplicateContactsView: View {
@@ -13,7 +14,17 @@ struct DuplicateContactsView: View {
         content
             .navigationTitle("Duplicate Contacts")
             .navigationBarTitleDisplayMode(.large)
-            .reviewBar()
+            .reviewBar(bulk: bulkSelection)
+    }
+
+    private var bulkSelection: BulkSelection? {
+        let groups = app.contacts.groups
+        guard app.contactAccess.state == .authorized, app.contacts.phase == .done, !groups.isEmpty else {
+            return nil
+        }
+        return BulkSelection(isAllSelected: app.basket.containsAll(groups.map(\.id)), noun: "merges") { [app] in
+            app.basket.toggleAll(groups)
+        }
     }
 
     @ViewBuilder
@@ -78,9 +89,11 @@ struct DuplicateContactsView: View {
 
     private var groupList: some View {
         let groups = app.contacts.groups
+        let summary = ContactsSummary(groups: groups, extraCardCount: app.contacts.extraCardCount)
         return ScrollView {
             LazyVStack(alignment: .leading, spacing: Space.s12) {
-                summaryCard(groups)
+                CategorySubtitle(
+                    route: .duplicateContacts, systemImage: "person.crop.rectangle.stack", text: summary.subtitle)
                 ForEach(groups) { group in
                     if let preview = app.contacts.preview(for: group) {
                         ContactGroupCard(
@@ -88,44 +101,13 @@ struct DuplicateContactsView: View {
                             onToggle: { app.basket.toggle(group) })
                     }
                 }
+                ListFootnote(
+                    text: "Merging keeps every number, email and address, and saves a backup first. "
+                        + "Notes can't be read by apps, so notes on removed cards aren't carried over.")
             }
             .padding(.horizontal, Space.margin)
             .padding(.bottom, Layout.bottomBarClearance)
         }
         .background(RoomyColor.bg)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { SelectAllGroupsButton(groups: groups) }
-        }
-    }
-
-    private func summaryCard(_ groups: [ContactGroup]) -> some View {
-        let summary = ContactsSummary(groups: groups, extraCardCount: app.contacts.extraCardCount)
-        return CategorySummaryCard(
-            route: .duplicateContacts, systemImage: "person.crop.rectangle.stack", value: summary.value,
-            detail: summary.detail
-        ) {
-            Text(
-                "Merging keeps every number, email and address, and saves a backup first. "
-                    + "Notes can't be read by apps, so notes on removed cards aren't carried over."
-            )
-            .font(RoomyFont.footnote)
-            .foregroundStyle(RoomyColor.textSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
-/// The bar's Select All for merges, worded like the one on the photo screens, acting on every group shown.
-private struct SelectAllGroupsButton: View {
-    @Environment(AppState.self) private var app
-    let groups: [ContactGroup]
-
-    var body: some View {
-        let isAllSelected = app.basket.containsAll(groups.map(\.id))
-        Button(isAllSelected ? "Deselect All" : "Select All") {
-            Haptics.tap()
-            app.basket.toggleAll(groups)
-        }
-        .disabled(groups.isEmpty)
     }
 }

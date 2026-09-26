@@ -22,6 +22,10 @@ nonisolated struct SimilarGroupSelection: Equatable {
     /// A group whose every extra is marked by the person has nothing to select in bulk.
     var canSelectExtras: Bool { !group.suggestedExtras.isEmpty }
 
+    /// The group's toggle: "Select extras", or "Extras selected" once they all are; tapping it then keeps all.
+    var extrasToggleTitle: String { areAllExtrasQueued ? "Extras selected" : "Select extras" }
+    var extrasToggleState: SelectionState { areAllExtrasQueued ? .on : .off }
+
     /// Members that stay: every member not in the basket, the keeper included unless it is queued.
     var keptCount: Int { group.members.count - queued.count }
 

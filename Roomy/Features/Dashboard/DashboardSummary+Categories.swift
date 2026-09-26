@@ -1,6 +1,8 @@
-// Why: each category tile says what it holds in words and shows a few of the actual items, so people
-// recognise their own photos before they tap. When a tile can't have numbers — no access, not scanned yet —
-// it says why, with a glyph that matches, instead of showing an endless skeleton.
+// Why: each category tile says what it holds in one short line and shows a few of the actual items, so people
+// recognise their own photos before they tap and two tiles fit a row without wrapping. The short line is a number
+// and a size, or a word or two saying why there are no numbers — no access, not scanned yet — with a glyph that
+// matches, instead of an endless skeleton. VoiceOver hears the same facts as a full sentence, so nothing the short
+// line leaves out ("at least", what is in iCloud, "photos not checked") is lost.
 import Foundation
 
 nonisolated struct CategoryTile: Identifiable, Equatable {
@@ -28,15 +30,19 @@ nonisolated struct CategoryTile: Identifiable, Equatable {
 
     let route: Route
     let name: String
-    /// nil while loading.
+    /// One short line; nil while loading.
     let detail: String?
     let preview: Preview
+    /// The detail as VoiceOver says it, in full words; nil when the short line already says everything.
+    var spokenDetail: String? = nil
 
     var id: Route { route }
+    /// What VoiceOver reads after the name.
+    var accessibilityDetail: String? { spokenDetail ?? detail }
 }
 
 nonisolated extension DashboardSummary {
-    /// What an empty category says instead of "0 KB".
+    /// What an empty photo category says instead of "0 KB".
     static let allClear = "All clear"
     /// Contacts are matched on shared numbers and emails only, so an empty result is not a promise.
     static let noLikelyDuplicates = "No likely duplicates"
@@ -46,15 +52,10 @@ nonisolated extension DashboardSummary {
             similarTile,
             photoTile(
                 .screenshots, "Screenshots", ready: isIndexed, totals: screenshots,
-                preview: CategoryTile.Preview.screenshots
-            ) {
-                "\($0.count.counted("screenshot")) · \($0.sizeText)"
-            },
+                shown: (screenshots.count, "screenshot"), preview: CategoryTile.Preview.screenshots),
             photoTile(
-                .largeVideos, "Large videos", ready: isIndexed, totals: videos, preview: CategoryTile.Preview.videos
-            ) {
-                "\($0.count.counted("video")) · \($0.sizeText)"
-            },
+                .largeVideos, "Large videos", ready: isIndexed, totals: videos, shown: (videos.count, "video"),
+                preview: CategoryTile.Preview.videos),
             contactTile,
         ]
     }
@@ -62,66 +63,75 @@ nonisolated extension DashboardSummary {
     /// Groups are known only once comparing finishes; a stopped comparison says so instead of "All clear",
     /// and photos that couldn't be compared are counted rather than treated as checked.
     private var similarTile: CategoryTile {
+        let name = "Similar photos"
         if canUseLibrary && phase == .stopped {
             return CategoryTile(
-                route: .similarPhotos, name: "Similar photos", detail: Self.comparisonNotFinished,
-                preview: .status(.paused))
+                route: .similarPhotos, name: name, detail: "Paused", preview: .status(.paused),
+                spokenDetail: Self.comparisonNotFinished)
         }
         // Groups whose extras are all ones the person marked are still listed, so the card never says "All clear".
         if canUseLibrary && phase == .done && similar.count == 0 && similar.groups > 0 {
-            let detail = "\(similar.groups.counted("group")) · nothing suggested"
             return CategoryTile(
-                route: .similarPhotos, name: "Similar photos", detail: detail, preview: .photos(similar.previewIDs))
+                route: .similarPhotos, name: name, detail: "All kept", preview: .photos(similar.previewIDs),
+                spokenDetail: "\(similar.groups.counted("group")), nothing suggested")
         }
         let tile = photoTile(
-            .similarPhotos, "Similar photos", ready: phase == .done, totals: similar,
-            preview: CategoryTile.Preview.photos
-        ) {
-            "\($0.groups.counted("group")) · \($0.sizeText)"
-        }
+            .similarPhotos, name, ready: phase == .done, totals: similar, shown: (similar.groups, "group"),
+            preview: CategoryTile.Preview.photos)
         guard tile.detail == Self.allClear, similar.unchecked > 0 else { return tile }
-        let detail = "None found · \(similar.unchecked.formatted()) not checked"
-        return CategoryTile(route: .similarPhotos, name: tile.name, detail: detail, preview: .status(.clear))
+        return CategoryTile(
+            route: .similarPhotos, name: name, detail: "\(similar.unchecked.formatted()) not checked",
+            preview: .status(.clear), spokenDetail: "None found, \(similar.unchecked.counted("photo")) not checked")
     }
 
+    /// `shown` is the number on the tile and the noun VoiceOver says with it.
     private func photoTile(
-        _ route: Route, _ name: String, ready: Bool, totals: CategoryTotals,
-        preview: ([String]) -> CategoryTile.Preview, detail: (CategoryTotals) -> String
+        _ route: Route, _ name: String, ready: Bool, totals: CategoryTotals, shown: (count: Int, noun: String),
+        preview: ([String]) -> CategoryTile.Preview
     ) -> CategoryTile {
         if !canUseLibrary {
-            return CategoryTile(route: route, name: name, detail: "Needs Photos access", preview: .status(.locked))
+            return CategoryTile(
+                route: route, name: name, detail: "Allow access", preview: .status(.locked),
+                spokenDetail: "Needs Photos access")
         }
         if phase == .idle {
-            return CategoryTile(route: route, name: name, detail: "Not scanned yet", preview: .status(.notScanned))
+            return CategoryTile(
+                route: route, name: name, detail: "Not scanned", preview: .status(.notScanned),
+                spokenDetail: "Not scanned yet")
         }
         guard ready else { return CategoryTile(route: route, name: name, detail: nil, preview: .loading) }
         guard totals.count > 0 else {
             return CategoryTile(route: route, name: name, detail: Self.allClear, preview: .status(.clear))
         }
-        return CategoryTile(route: route, name: name, detail: detail(totals), preview: preview(totals.previewIDs))
+        return CategoryTile(
+            route: route, name: name, detail: "\(shown.count.formatted()) · \(totals.shortSizeText)",
+            preview: preview(totals.previewIDs),
+            spokenDetail: "\(shown.count.counted(shown.noun)), \(totals.spokenSizeText)")
     }
 
     private var contactTile: CategoryTile {
-        let name = "Duplicate contacts"
-        let detail: String?
-        var preview = CategoryTile.Preview.status(.locked)
+        let (detail, spoken, preview) = contactState
+        return CategoryTile(
+            route: .duplicateContacts, name: "Duplicate contacts", detail: detail, preview: preview,
+            spokenDetail: spoken)
+    }
+
+    /// The short line, its spoken form and the well, by access and scan.
+    private var contactState: (String?, String?, CategoryTile.Preview) {
         switch (contacts.access, contacts.phase) {
-        case (.notDetermined, _): detail = "Tap to allow"
-        case (.limited, _): detail = "Needs full access"
-        case (.denied, _), (.restricted, _): detail = "Access off"
-        case (.authorized, .idle), (.authorized, .scanning):
-            detail = nil
-            preview = .loading
-        case (.authorized, .failed):
-            detail = "Couldn't read contacts"
-            preview = .status(.failed)
+        case (.notDetermined, _): ("Allow access", "Needs Contacts access", .status(.locked))
+        case (.limited, _): ("Allow full access", "Needs full Contacts access", .status(.locked))
+        case (.denied, _), (.restricted, _): ("Access off", "Contacts access is off", .status(.locked))
+        case (.authorized, .idle), (.authorized, .scanning): (nil, nil, .loading)
+        case (.authorized, .failed): ("Couldn't read", "Couldn't read contacts", .status(.failed))
         case (.authorized, .done) where contacts.groups == 0:
-            detail = Self.noLikelyDuplicates
-            preview = .status(.clear)
+            ("None found", Self.noLikelyDuplicates, .status(.clear))
         case (.authorized, .done):
-            detail = "\(contacts.groups.counted("group")) · \(contacts.extraCards.counted("extra card"))"
-            preview = .initials(contacts.initials)
+            (
+                contacts.extraCards.counted("extra card"),
+                "\(contacts.groups.counted("group")), \(contacts.extraCards.counted("extra card"))",
+                .initials(contacts.initials)
+            )
         }
-        return CategoryTile(route: .duplicateContacts, name: name, detail: detail, preview: preview)
     }
 }

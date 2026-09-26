@@ -1,6 +1,6 @@
-// Why: the summary card's big value must stay on one line, so it shows only the size on this phone; any part
-// kept only in iCloud goes on the line under it, before the counts. Splitting the old one-line summary this
-// way is a presentation rule, so it is a pure value with a test.
+// Why: the screen's numbers sit in one line under the large title (Figma "Fix 5 · C"): the size of the suggested
+// extras, then the counts. Any part kept only in iCloud is named in the size ("12 MB + 3 GB in iCloud"), and an
+// unknown size says so, so the line never shows a made-up value. A pure value, so the wording has a test.
 import Foundation
 
 nonisolated struct SimilarPhotosSummary: Equatable {
@@ -9,11 +9,8 @@ nonisolated struct SimilarPhotosSummary: Equatable {
     /// The size of the suggested extras.
     let size: SizeTotal
 
-    var value: String { size.headline }
-
-    var detail: String {
-        let counts = "\(groupCount) groups · \(extraCount) extras"
-        guard let inCloudNote = size.inCloudNote else { return counts }
-        return "\(inCloudNote) · \(counts)"
+    /// "48.2 MB · 12 groups · 31 extras".
+    var subtitle: String {
+        "\(size.text) · \(groupCount.counted("group")) · \(extraCount.counted("extra"))"
     }
 }

@@ -1,11 +1,14 @@
 // Why: the Welcome stage is Roomy over a soft ground shadow, above the storage capsule. Roomy falls in once and
 // lands with a small squash while his shadow darkens under him; the capsule shakes three times, with one warning
 // haptic, when its fill turns red. Each of those is keyed to a counter in `WelcomeScene`, not to a flag, so jumping to the
-// rest pose never replays them — and with Reduce Motion the counters never move at all.
+// rest pose never replays them — and with Reduce Motion the counters never move at all. The launch intro plays the
+// same stage without the haptic.
 import SwiftUI
 
 struct WelcomeStage: View {
     let scene: WelcomeScene
+    /// Onboarding's one warning buzz; the launch intro, seen on every launch, stays silent.
+    var playsHaptic = true
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -26,7 +29,7 @@ struct WelcomeStage: View {
                         LinearKeyframe(0, duration: Motion.shakeStep)
                     }
                 }
-                .sensoryFeedback(.warning, trigger: scene.signals)
+                .sensoryFeedback(trigger: scene.signals) { _, _ in playsHaptic ? .warning : nil }
         }
         .accessibilityHidden(true)
     }

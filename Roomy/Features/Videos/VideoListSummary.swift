@@ -1,7 +1,6 @@
-// Why: with the "Over 500 MB" filter on, the count and size above the list must describe the list below it,
-// and a filter that hides everything must say so instead of leaving a blank screen. The summary card shows the
-// size on this phone as its one-line value and names what is only in iCloud on the line under it, beside the
-// count, so a video kept in iCloud never reads "0 KB". Kept pure so it is tested.
+// Why: with the "Over 500 MB" filter on, the count and size under the title must describe the list below it,
+// and a filter that hides everything must say so instead of leaving a blank screen. The size names what is only
+// in iCloud ("1 GB + 3 GB in iCloud"), so a video kept in iCloud never reads "0 KB". Kept pure so it is tested.
 import Foundation
 
 nonisolated struct VideoListSummary: Equatable {
@@ -23,14 +22,8 @@ nonisolated struct VideoListSummary: Equatable {
         size = visible.sizeTotal
     }
 
-    /// The card's big number: space on this phone, "at least 2.4 GB" when some sizes are unknown.
-    var value: String { size.headline }
-
-    /// Under it: what is kept only in iCloud, then the count. "+ 860 MB in iCloud · 40 videos", or
-    /// "2 of 40 videos" with the filter on.
-    var detail: String {
-        [size.inCloudNote, countLabel].compactMap { $0 }.joined(separator: " · ")
-    }
+    /// The line under the title: "2.4 GB · 40 videos", or "1.2 GB · 2 of 40 videos" with the filter on.
+    var subtitle: String { "\(size.text) · \(countLabel)" }
 
     private var countLabel: String {
         guard isFiltered else { return totalCount.counted("video") }

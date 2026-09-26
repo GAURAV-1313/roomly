@@ -1,5 +1,5 @@
-// Why: while videos are indexed the screen keeps its final shape: the summary card, then rows with a poster,
-// two lines of words and the check where the size column will be (Figma "Large Videos — indexing"). The
+// Why: while videos are indexed the screen keeps its final shape: the line under the title, then rows with a
+// poster, two lines of words and the check where the size column will be (Figma "Large Videos — indexing"). The
 // skeletons hold the space; no size or count is shown until it is real.
 import SwiftUI
 
@@ -7,7 +7,7 @@ struct VideoRowsSkeleton: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s12) {
-                SummaryCardSkeleton(route: .largeVideos)
+                CategorySubtitleSkeleton()
                 ForEach(0..<Layout.skeletonVideoRows, id: \.self) { _ in row }
             }
             .padding(.horizontal, Space.margin)

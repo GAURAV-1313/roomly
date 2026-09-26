@@ -1,8 +1,10 @@
 // Why: one group as a card — the reason they were grouped and Compare on top, the keeper first with its Best
 // badge, the extras after it, and what keeping or removing would mean. Tapping a photo toggles it in the
 // basket; a long press shows it large first. The footer and tiles come from `SimilarGroupSelection`, so a
-// queued keeper is never hidden behind its badge. The reason chip wears the Similar colour (Figma
-// "SimilarGroupCard v5"); at accessibility text sizes the chips and the footer stack instead of squeezing.
+// queued keeper is never hidden behind its badge. The group's own "Select extras" is a text-style toggle, not a
+// filled pill, so it doesn't read as a repeat of the screen's bulk action (Figma "SelectToggle v5"). The reason
+// chip wears the Similar colour (Figma "SimilarGroupCard v5"); at accessibility text sizes the chips and the
+// footer stack instead of squeezing.
 import SwiftUI
 
 struct SimilarGroupCard: View {
@@ -99,11 +101,15 @@ struct SimilarGroupCard: View {
                 .foregroundStyle(RoomyColor.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             if selection.canSelectExtras {
-                Button(selection.areAllExtrasQueued ? "Keep all" : "Select extras") {
+                SelectToggle(
+                    title: selection.extrasToggleTitle, state: selection.extrasToggleState,
+                    accessibilityHint: selection.areAllExtrasQueued
+                        ? "Takes the extras out of Review and keeps all" : "Adds the suggested extras to Review"
+                ) {
                     app.basket.toggleAll(app.scan.snapshots(group.suggestedExtras))
                 }
-                .buttonStyle(.roomySecondary)
-                .controlSize(.small)
+                // Like Compare: the full target reaches past the short text row without making the card taller.
+                .padding(.vertical, -Space.s12)
             }
         }
     }

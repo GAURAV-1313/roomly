@@ -1,11 +1,11 @@
 // Why: size is the sort key, so this is a list with a right-aligned size column, not a grid. Tap a row
-// to select it; tap the poster to watch it first. The summary card always describes the list under it, and
-// its "Over 500 MB" switch is the screen's one filter. Select All sits in the bar only while there is a list.
+// to select it; tap the poster to watch it first. The line under the title always describes the list under it,
+// and the "Over 500 MB" chip is the screen's one filter. "Select all" beside Review takes exactly the videos
+// the list shows, never ones the filter hides.
 import SwiftUI
 
 struct LargeVideosView: View {
     @Environment(AppState.self) private var app
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var playing: AssetSnapshot?
     @State private var showsLargeOnly = false
 
@@ -14,16 +14,28 @@ struct LargeVideosView: View {
     }
 
     var body: some View {
+        let summary = summary
         content(summary)
             .navigationTitle("Large Videos")
             .navigationBarTitleDisplayMode(.large)
-            .reviewBar()
+            .reviewBar(bulk: bulkSelection(summary))
             .sheet(item: $playing) { video in
                 VideoPlayerSheet(video: video)
                     .environment(app)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+    }
+
+    private func bulkSelection(_ summary: VideoListSummary) -> BulkSelection? {
+        let visible = summary.visible
+        let state = PhotoScanGateState.make(
+            access: app.photoAccess.state, phase: app.scan.phase, isEmpty: app.scan.videos.isEmpty,
+            needsComparison: false)
+        guard state.showsContent, !visible.isEmpty else { return nil }
+        return BulkSelection(isAllSelected: app.basket.containsAll(visible.map(\.id))) { [app] in
+            app.basket.toggleAll(visible)
+        }
     }
 
     private func content(_ summary: VideoListSummary) -> some View {
@@ -34,7 +46,7 @@ struct LargeVideosView: View {
         ) {
             ScrollView {
                 LazyVStack(spacing: Space.s12) {
-                    summaryCard(summary)
+                    header(summary)
                     if summary.isFilterHidingEverything {
                         noLargeVideosCard
                     }
@@ -48,34 +60,17 @@ struct LargeVideosView: View {
                 .padding(.bottom, Layout.bottomBarClearance)
             }
             .background(RoomyColor.bg)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { SelectAllButton(items: summary.visible) }
-            }
         } placeholder: {
             VideoRowsSkeleton()
         }
     }
 
-    private func summaryCard(_ summary: VideoListSummary) -> some View {
-        CategorySummaryCard(
-            route: .largeVideos, systemImage: "film.stack", value: summary.value, detail: summary.detail
-        ) {
-            if dynamicTypeSize.isAccessibilitySize {
-                // At accessibility sizes the switch drops under its label instead of squeezing it.
-                VStack(alignment: .leading, spacing: Space.s8) {
-                    filterLabel.accessibilityHidden(true)
-                    Toggle(isOn: $showsLargeOnly) { filterLabel }.labelsHidden()
-                }
-            } else {
-                Toggle(isOn: $showsLargeOnly) { filterLabel }
-            }
+    private func header(_ summary: VideoListSummary) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            CategorySubtitle(route: .largeVideos, systemImage: "film.stack", text: summary.subtitle)
+            FilterChip(title: "Over 500 MB", isOn: $showsLargeOnly)
         }
-        .toggleStyle(.switch)
-        .tint(RoomyColor.accent)
-    }
-
-    private var filterLabel: some View {
-        Text("Over 500 MB").font(RoomyFont.subheadline).foregroundStyle(RoomyColor.textPrimary)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var noLargeVideosCard: some View {

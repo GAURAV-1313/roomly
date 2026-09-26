@@ -1,6 +1,6 @@
-// Why: the summary card above the duplicate groups says how many merges there are and what they do to the
-// address book — "3 groups", then "7 cards → 3" — so the size of the job is clear before anything is picked.
-// Kept pure so the counts are tested.
+// Why: the line under the title says how many merges there are and what they do to the address book —
+// "3 groups · 7 cards → 3" — so the size of the job is clear before anything is picked. Kept pure so the counts
+// are tested.
 import Foundation
 
 nonisolated struct ContactsSummary: Equatable {
@@ -13,9 +13,6 @@ nonisolated struct ContactsSummary: Equatable {
         cardCount = groups.count + extraCardCount
     }
 
-    /// The card's big value: "3 groups".
-    var value: String { groupCount.counted("group") }
-
-    /// Under it, the cards before and after merging: "7 cards → 3".
-    var detail: String { "\(cardCount) cards → \(groupCount)" }
+    /// "3 groups · 7 cards → 3".
+    var subtitle: String { "\(groupCount.counted("group")) · \(cardCount.counted("card")) → \(groupCount)" }
 }

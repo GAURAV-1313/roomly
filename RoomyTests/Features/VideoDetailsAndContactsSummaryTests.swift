@@ -1,5 +1,5 @@
-// Why: the words beside a video and above the contact groups are small derivations from real data. These tests
-// pin that none of them invents a value — no date, no size, iCloud-only files — and that the counts add up.
+// Why: the words beside a video are small derivations from real data. These tests pin that none of them invents
+// a value — no date, no size, iCloud-only files.
 import XCTest
 
 @testable import Roomy
@@ -33,17 +33,5 @@ final class VideoDetailsAndContactsSummaryTests: XCTestCase {
             ])
         let cloud = AssetSnapshot.fixture("c", kind: .video, size: 3_000_000_000, inCloud: 3_000_000_000)
         XCTAssertEqual(VideoDetails.facts(cloud).last?.value, "\(Int64(3_000_000_000).byteString) · in iCloud")
-    }
-
-    func testContactsSummaryCountsGroupsAndCardsBeforeAndAfter() {
-        let groups = [
-            ContactGroup(id: "g1", primary: "a", extras: ["b"], reason: .samePhone),
-            ContactGroup(id: "g2", primary: "c", extras: ["d", "e"], reason: .sameEmail),
-            ContactGroup(id: "g3", primary: "f", extras: ["g"], reason: .samePhone),
-        ]
-        let summary = ContactsSummary(groups: groups, extraCardCount: 4)
-        XCTAssertEqual(summary.value, "3 groups")
-        XCTAssertEqual(summary.detail, "7 cards → 3")
-        XCTAssertEqual(ContactsSummary(groups: [groups[0]], extraCardCount: 1).value, "1 group")
     }
 }

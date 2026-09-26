@@ -1,13 +1,17 @@
-// Why: the Photos idiom people already know — a tight four-column grid under month headers, with "Select
-// N" per month and Select All for the whole screen. A tap adds to or removes from the basket; nothing is
-// deleted here. Screenshots often hold tickets, codes or receipts, so a long press shows one large first.
-// The screen opens with the same summary card as every category; at accessibility text sizes the grid drops
-// to three columns so the tiles stay recognisable.
+// Why: the Photos idiom people already know — a tight four-column grid under month headers. Each month folds to
+// one row with its own toggle ("Select 24"), the newest open, so a whole month is selected without scrolling
+// through it; "Select all" beside Review takes every screenshot shown. A tap adds to or removes from the basket;
+// nothing is deleted here. Screenshots often hold tickets, codes or receipts, so a long press shows one large
+// first. The numbers sit under the title; at accessibility text sizes the grid drops to three columns so the
+// tiles stay recognisable.
 import SwiftUI
 
 struct ScreenshotsView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Months the person folded; seeded once with the default, kept while the screen is on the stack.
+    @State private var collapsed: Set<String> = []
 
     private var columns: [GridItem] {
         let count = dynamicTypeSize.isAccessibilitySize ? Layout.screenshotColumnsAccessible : Layout.screenshotColumns
@@ -18,10 +22,17 @@ struct ScreenshotsView: View {
         content
             .navigationTitle("Screenshots")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { SelectAllButton(items: app.scan.screenshots) }
-            }
-            .reviewBar()
+            .reviewBar(bulk: bulkSelection)
+    }
+
+    private var bulkSelection: BulkSelection? {
+        let screenshots = app.scan.screenshots
+        let state = PhotoScanGateState.make(
+            access: app.photoAccess.state, phase: app.scan.phase, isEmpty: screenshots.isEmpty, needsComparison: false)
+        guard state.showsContent else { return nil }
+        return BulkSelection(isAllSelected: app.basket.containsAll(screenshots.map(\.id))) { [app] in
+            app.basket.toggleAll(screenshots)
+        }
     }
 
     private var content: some View {
@@ -30,31 +41,39 @@ struct ScreenshotsView: View {
             emptyMessage: "No screenshots here. Roomy will keep an eye out.",
             tint: Route.screenshots.categoryTintSoft
         ) {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: Space.s12, pinnedViews: .sectionHeaders) {
-                    summaryCard
-                    ForEach(MonthSections.make(app.scan.screenshots, date: \.creationDate)) { section in
-                        Section {
-                            grid(section.items)
-                        } header: {
-                            header(for: section)
-                        }
-                    }
-                }
-                .padding(.horizontal, Space.margin)
-                .padding(.bottom, Layout.bottomBarClearance)
-            }
-            .background(RoomyColor.bg)
+            screenshotList
         } placeholder: {
             ScreenshotsSkeleton(columns: columns)
         }
     }
 
-    private var summaryCard: some View {
+    private var screenshotList: some View {
         let screenshots = app.scan.screenshots
-        let summary = ScreenshotsSummary(count: screenshots.count, size: screenshots.sizeTotal)
-        return CategorySummaryCard(
-            route: .screenshots, systemImage: "camera.viewfinder", value: summary.value, detail: summary.detail)
+        let sections = MonthSections.make(screenshots, date: \.creationDate)
+        let folding = MonthFolding(ids: sections.map(\.id), collapsed: collapsed)
+        return ScrollView {
+            LazyVStack(alignment: .leading, spacing: Space.s12, pinnedViews: .sectionHeaders) {
+                CategorySubtitle(
+                    route: .screenshots, systemImage: "camera.viewfinder",
+                    text: ScreenshotsSummary(count: screenshots.count, size: screenshots.sizeTotal).subtitle)
+                if folding.showsFoldAllRow {
+                    MonthFoldAllRow(folding: folding) { fold(to: folding.afterFoldAll) }
+                }
+                ForEach(sections) { section in
+                    Section {
+                        if folding.isOpen(section.id) {
+                            grid(section.items).transition(rowTransition)
+                        }
+                    } header: {
+                        header(for: section, folding: folding)
+                    }
+                }
+            }
+            .padding(.horizontal, Space.margin)
+            .padding(.bottom, Layout.bottomBarClearance)
+        }
+        .background(RoomyColor.bg)
+        .foldingOlderMonths(sections.map(\.id), into: $collapsed)
     }
 
     private func grid(_ shots: [AssetSnapshot]) -> some View {
@@ -83,15 +102,24 @@ struct ScreenshotsView: View {
         app.basket.toggle(shot)
     }
 
-    private func header(for section: MonthSection<AssetSnapshot>) -> some View {
-        let isAllSelected = app.basket.containsAll(section.items.map(\.id))
-        return SectionHeader(
-            title: section.title,
-            detail: ScreenshotsSummary.monthDetail(count: section.items.count, size: section.items.sizeTotal),
-            action: isAllSelected ? "Deselect" : "Select \(section.items.count)", style: .month
-        ) {
-            app.basket.toggleAll(section.items)
+    private func header(for section: MonthSection<AssetSnapshot>, folding: MonthFolding) -> some View {
+        let month = MonthSummary.screenshots(
+            month: section.title, count: section.items.count,
+            selectedCount: section.items.filter { app.basket.contains($0.id) }.count, size: section.items.sizeTotal)
+        return MonthHeader(
+            month: month, isOpen: folding.isOpen(section.id),
+            onToggleOpen: { fold(to: folding.toggling(section.id)) },
+            onToggleSelection: { app.basket.toggleAll(section.items) })
+    }
+
+    private func fold(to newCollapsed: Set<String>) {
+        withAnimation(reduceMotion ? Motion.quick : Motion.disclose) {
+            collapsed = newCollapsed
         }
-        .background(RoomyColor.bg)
+    }
+
+    /// The grid slides down from its month as it opens; with Reduce Motion it only fades.
+    private var rowTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top))
     }
 }

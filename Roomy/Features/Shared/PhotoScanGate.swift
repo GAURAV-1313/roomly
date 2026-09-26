@@ -90,29 +90,27 @@ struct PhotoScanGate<Content: View, Placeholder: View>: View {
         "Roomy can only see the photos you picked, so there may be more in your library."
     }
 
-    @ViewBuilder
+    /// One stable stack whatever the note: the banner comes and goes above `content`, which keeps its identity, so
+    /// the list's folding and scroll position survive a note appearing or clearing (for example after Resume).
     private func noted(_ note: PhotoScanGateState.Note?) -> some View {
-        switch note {
-        case .limitedAccess:
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
+            switch note {
+            case .limitedAccess:
                 banner(
                     NoticeRow(
                         tone: .info, systemImage: "photo.on.rectangle", title: "Roomy sees only some photos",
                         message: "Results cover just the photos you picked.",
                         accessory: .action("Change", changeSelection)))
-                content
-            }
-        case .comparisonNotFinished:
-            VStack(spacing: 0) {
+            case .comparisonNotFinished:
                 banner(
                     NoticeRow(
                         tone: .info, systemImage: "pause.fill", title: DashboardSummary.comparisonNotFinished,
                         message: "These groups are from an earlier scan.",
                         hint: "Resume to compare the rest; photos already compared are kept.",
                         accessory: .action("Resume", app.rescan)))
-                content
+            case nil:
+                EmptyView()
             }
-        case nil:
             content
         }
     }

@@ -5,6 +5,9 @@
 import Foundation
 
 nonisolated struct SizeTotal: Equatable, Sendable {
+    /// Said instead of a size when none is known.
+    static let unavailable = "size unavailable"
+
     /// Known bytes on this phone.
     var knownBytes: Int64 = 0
     var knownCount = 0
@@ -33,7 +36,7 @@ nonisolated struct SizeTotal: Equatable, Sendable {
     /// "12 MB"; "at least 12 MB" when some sizes are unknown; "size unavailable" when none is known. Bytes kept
     /// only in iCloud are named apart: "12 MB + 3 GB in iCloud", or "3 GB in iCloud" when nothing is here.
     var text: String {
-        guard unknownCount == 0 || knownCount > 0 else { return "size unavailable" }
+        guard unknownCount == 0 || knownCount > 0 else { return Self.unavailable }
         let onPhone = unknownCount > 0 ? "at least \(knownBytes.byteString)" : knownBytes.byteString
         guard inCloudBytes > 0 else { return onPhone }
         let inCloud = "\(inCloudBytes.byteString) in iCloud"
@@ -44,7 +47,7 @@ nonisolated struct SizeTotal: Equatable, Sendable {
     /// on this phone, the iCloud amount itself.
     var headline: String {
         guard knownBytes > 0 || inCloudBytes == 0 else { return "\(inCloudBytes.byteString) in iCloud" }
-        guard unknownCount == 0 || knownCount > 0 else { return "size unavailable" }
+        guard unknownCount == 0 || knownCount > 0 else { return Self.unavailable }
         return unknownCount > 0 ? "at least \(knownBytes.byteString)" : knownBytes.byteString
     }
 

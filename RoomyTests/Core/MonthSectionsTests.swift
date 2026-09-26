@@ -15,6 +15,16 @@ final class MonthSectionsTests: XCTestCase {
         XCTAssertEqual(MonthSections.title(for: nil), "Undated")
     }
 
+    func testOneOrTwoMonthsAllStartOpen() {
+        XCTAssertEqual(MonthSections.defaultCollapsed([]), [])
+        XCTAssertEqual(MonthSections.defaultCollapsed(["Sep"]), [])
+        XCTAssertEqual(MonthSections.defaultCollapsed(["Sep", "Aug"]), [])
+    }
+
+    func testWithMoreThanTwoMonthsOnlyTheNewestStartsOpen() {
+        XCTAssertEqual(MonthSections.defaultCollapsed(["Sep", "Aug", "Jul"]), ["Aug", "Jul"])
+    }
+
     func testByteStringUsesSettingsUnits() {
         XCTAssertEqual(Int64(1_500_000_000).byteString, "1.5\u{00A0}GB")
     }

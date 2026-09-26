@@ -24,7 +24,15 @@ final class SizeTotalTests: XCTestCase {
         let summary = DashboardSummary(
             phase: .done, volume: VolumeStats(total: 100, free: 50), canUseLibrary: true, similar: unsized)
         let tile = summary.tiles.first { $0.route == .similarPhotos }
-        XCTAssertEqual(tile?.detail, "1 group · size unavailable")
+        XCTAssertEqual(tile?.detail, "1 · size unavailable")
+        XCTAssertEqual(tile?.accessibilityDetail, "1 group, size unavailable")
+    }
+
+    func testSpokenSizesUseTheSameAmountInFullWords() {
+        XCTAssertEqual(Int64(312_000_000).spokenByteString, "312 megabytes")
+        XCTAssertEqual(Int64(2_900_000).spokenByteString, "2.9 megabytes")
+        XCTAssertEqual(Int64(1_000_000_000).spokenByteString, "1 gigabyte")
+        XCTAssertEqual(Int64(0).spokenByteString, "0 kilobytes")
     }
 
     /// Regression: "at least 2.4 GB + 860 MB in iCloud" wrapped in a summary card's big number.

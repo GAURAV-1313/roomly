@@ -14,8 +14,7 @@ final class VideoPresentationTests: XCTestCase {
     func testUnfilteredSummaryCountsEveryVideo() {
         let summary = VideoListSummary(videos: videos, showsLargeOnly: false)
         XCTAssertEqual(summary.visible.map(\.id), ["big", "small", "unknown"])
-        XCTAssertEqual(summary.value, "at least \(Int64(1_000_000_000).byteString)")
-        XCTAssertEqual(summary.detail, "3 videos")
+        XCTAssertEqual(summary.subtitle, "at least \(Int64(1_000_000_000).byteString) · 3 videos")
         XCTAssertFalse(summary.isFilterHidingEverything)
     }
 
@@ -23,8 +22,7 @@ final class VideoPresentationTests: XCTestCase {
     func testFilteredSummaryDescribesTheFilteredList() {
         let summary = VideoListSummary(videos: videos, showsLargeOnly: true)
         XCTAssertEqual(summary.visible.map(\.id), ["big"])
-        XCTAssertEqual(summary.value, Int64(900_000_000).byteString)
-        XCTAssertEqual(summary.detail, "1 of 3 videos")
+        XCTAssertEqual(summary.subtitle, "\(Int64(900_000_000).byteString) · 1 of 3 videos")
     }
 
     /// Regression: a filter matching nothing left a blank list with no explanation.
@@ -32,8 +30,7 @@ final class VideoPresentationTests: XCTestCase {
         let small: [AssetSnapshot] = [.fixture("small", kind: .video, size: 100_000_000)]
         let summary = VideoListSummary(videos: small, showsLargeOnly: true)
         XCTAssertTrue(summary.isFilterHidingEverything)
-        XCTAssertEqual(summary.value, Int64(0).byteString)
-        XCTAssertEqual(summary.detail, "0 of 1 video")
+        XCTAssertEqual(summary.subtitle, "\(Int64(0).byteString) · 0 of 1 video")
         XCTAssertFalse(VideoListSummary(videos: [], showsLargeOnly: true).isFilterHidingEverything)
     }
 
@@ -42,28 +39,26 @@ final class VideoPresentationTests: XCTestCase {
         let cloud: [AssetSnapshot] = [.fixture("cloud", kind: .video, size: 3_000_000_000, inCloud: 3_000_000_000)]
         let summary = VideoListSummary(videos: cloud, showsLargeOnly: true)
         XCTAssertEqual(summary.visible.map(\.id), ["cloud"], "the filter goes by the size its row shows")
-        XCTAssertEqual(summary.value, "\(Int64(3_000_000_000).byteString) in iCloud")
-        XCTAssertEqual(summary.detail, "1 of 1 video")
+        XCTAssertEqual(summary.subtitle, "\(Int64(3_000_000_000).byteString) in iCloud · 1 of 1 video")
     }
 
-    /// The value stays one line — the size on this phone — and the iCloud part moves to the detail line,
-    /// before the count.
-    func testICloudPartOfAMixedListLeadsTheDetailLine() {
+    /// The size on this phone comes first and the iCloud part is named beside it, never added to it.
+    func testICloudPartOfAMixedListIsNamedApart() {
         let mixed: [AssetSnapshot] = [
             .fixture("here", kind: .video, size: 1_000_000_000),
             .fixture("cloud", kind: .video, size: 3_000_000_000, inCloud: 3_000_000_000),
         ]
         let summary = VideoListSummary(videos: mixed, showsLargeOnly: false)
-        XCTAssertEqual(summary.value, Int64(1_000_000_000).byteString)
-        XCTAssertEqual(summary.detail, "+ \(Int64(3_000_000_000).byteString) in iCloud · 2 videos")
+        XCTAssertEqual(
+            summary.subtitle,
+            "\(Int64(1_000_000_000).byteString) + \(Int64(3_000_000_000).byteString) in iCloud · 2 videos")
     }
 
     /// Regression: a list where Photos reported no size read "40 videos · 0 KB".
     func testUnknownSizesSaySoInsteadOfZero() {
         let unknown: [AssetSnapshot] = [.fixture("a", kind: .video), .fixture("b", kind: .video)]
         let summary = VideoListSummary(videos: unknown, showsLargeOnly: false)
-        XCTAssertEqual(summary.value, "size unavailable")
-        XCTAssertEqual(summary.detail, "2 videos")
+        XCTAssertEqual(summary.subtitle, "size unavailable · 2 videos")
     }
 
     func testLoadingShowsDownloadProgressThenTheVideo() {

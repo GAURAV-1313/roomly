@@ -13,6 +13,16 @@ nonisolated extension Int64 {
         formatter.allowsNonnumericFormatting = false
         return formatter.string(fromByteCount: self).replacingOccurrences(of: " ", with: "\u{00A0}")
     }
+
+    /// "312 megabytes": the same amount as `byteString`, its unit in full words so VoiceOver reads a sentence.
+    /// A unit it doesn't know (another language's) is left as `byteString` shows it.
+    var spokenByteString: String {
+        let parts = byteString.split(separator: "\u{00A0}").map(String.init)
+        guard parts.count == 2, let unit = Self.spokenUnits[parts[1]] else { return byteString }
+        return "\(parts[0]) \(parts[0] == "1" ? unit : unit + "s")"
+    }
+
+    private static let spokenUnits = ["KB": "kilobyte", "MB": "megabyte", "GB": "gigabyte", "TB": "terabyte"]
 }
 
 nonisolated extension Sequence where Element == AssetSnapshot {

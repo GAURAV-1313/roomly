@@ -26,7 +26,8 @@ final class DashboardSummaryTests: XCTestCase {
         XCTAssertEqual(done.cardTitle, "Ready to clean up")
         XCTAssertEqual(done.usageTitle, "91% full")
         XCTAssertEqual(done.usageDetail, "\(nearlyFull.used.byteString) used · \(nearlyFull.free.byteString) free")
-        XCTAssertEqual(done.heroCaption, "can be cleaned up")
+        XCTAssertEqual(done.heroCaption, "to clean up")
+        XCTAssertEqual(done.heroSpokenLabel, "9 kilobytes can be cleaned up")
 
         let scanning = DashboardSummary(
             phase: .indexing, volume: roomy, canUseLibrary: true, indexProgress: IndexProgress(scanned: 42, total: 90))
@@ -55,7 +56,8 @@ final class DashboardSummaryTests: XCTestCase {
 
         let shots = CategoryTotals(count: 7, bytes: 7_000, previewIDs: ["a", "b"])
         let comparing = DashboardSummary(phase: .comparing, volume: roomy, canUseLibrary: true, screenshots: shots)
-        XCTAssertEqual(tile(.screenshots, comparing)?.detail, "7 screenshots · 7\u{00A0}KB")
+        XCTAssertEqual(tile(.screenshots, comparing)?.detail, "7 · 7\u{00A0}KB")
+        XCTAssertEqual(tile(.screenshots, comparing)?.accessibilityDetail, "7 screenshots, 7 kilobytes")
         XCTAssertEqual(tile(.screenshots, comparing)?.preview, .screenshots(["a", "b"]))
         XCTAssertEqual(tile(.similarPhotos, comparing)?.preview, .loading, "groups are known only when done")
 
@@ -63,9 +65,14 @@ final class DashboardSummaryTests: XCTestCase {
         XCTAssertEqual(tile(.largeVideos, empty)?.detail, DashboardSummary.allClear)
 
         let blocked = DashboardSummary(phase: .idle, volume: roomy, canUseLibrary: false)
-        XCTAssertEqual(tile(.similarPhotos, blocked)?.detail, "Needs Photos access")
+        XCTAssertEqual(tile(.similarPhotos, blocked)?.detail, "Allow access")
+        XCTAssertEqual(tile(.similarPhotos, blocked)?.accessibilityDetail, "Needs Photos access")
         XCTAssertEqual(tile(.similarPhotos, blocked)?.preview, .status(.locked))
         XCTAssertEqual(tile(.largeVideos, empty)?.preview, .status(.clear))
+
+        let notScanned = DashboardSummary(phase: .idle, volume: roomy, canUseLibrary: true)
+        XCTAssertEqual(tile(.screenshots, notScanned)?.detail, "Not scanned")
+        XCTAssertEqual(tile(.screenshots, notScanned)?.accessibilityDetail, "Not scanned yet")
     }
 
     func testContactCardFollowsAccessAndScan() {
@@ -73,13 +80,22 @@ final class DashboardSummaryTests: XCTestCase {
             DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, contacts: contacts)
                 .tiles.first { $0.route == .duplicateContacts }
         }
-        XCTAssertEqual(tile(ContactTotals(access: .notDetermined))?.detail, "Tap to allow")
-        XCTAssertEqual(tile(ContactTotals(access: .limited))?.detail, "Needs full access")
+        XCTAssertEqual(tile(ContactTotals(access: .notDetermined))?.detail, "Allow access")
+        XCTAssertEqual(tile(ContactTotals(access: .limited))?.detail, "Allow full access")
+        XCTAssertEqual(tile(ContactTotals(access: .denied))?.detail, "Access off")
+        XCTAssertEqual(tile(ContactTotals(access: .authorized, phase: .failed))?.detail, "Couldn't read")
         XCTAssertEqual(tile(ContactTotals(access: .authorized, phase: .scanning))?.preview, .loading)
-        XCTAssertEqual(tile(ContactTotals(access: .authorized, phase: .done))?.detail, "No likely duplicates")
+        XCTAssertNil(tile(ContactTotals(access: .authorized, phase: .scanning))?.detail)
+        let none = tile(ContactTotals(access: .authorized, phase: .done))
+        XCTAssertEqual(none?.detail, "None found")
+        XCTAssertEqual(none?.accessibilityDetail, "No likely duplicates", "an empty match is not a promise")
         let done = tile(
             ContactTotals(access: .authorized, phase: .done, groups: 2, extraCards: 3, initials: ["A", "J"]))
-        XCTAssertEqual(done?.detail, "2 groups · 3 extra cards")
+        XCTAssertEqual(done?.detail, "3 extra cards")
+        XCTAssertEqual(done?.accessibilityDetail, "2 groups, 3 extra cards")
+        XCTAssertEqual(
+            tile(ContactTotals(access: .authorized, phase: .done, groups: 1, extraCards: 1))?.detail,
+            "1 extra card")
         XCTAssertEqual(done?.preview, .initials(["A", "J"]))
     }
 
@@ -89,7 +105,8 @@ final class DashboardSummaryTests: XCTestCase {
         XCTAssertEqual(stopped.cardTitle, "Comparison not finished")
         XCTAssertFalse(stopped.isScanning)
         let similar = stopped.tiles.first { $0.route == .similarPhotos }
-        XCTAssertEqual(similar?.detail, "Comparison not finished")
+        XCTAssertEqual(similar?.detail, "Paused")
+        XCTAssertEqual(similar?.accessibilityDetail, "Comparison not finished")
         XCTAssertEqual(similar?.preview, .status(.paused))
         let screenshots = stopped.tiles.first { $0.route == .screenshots }
         XCTAssertEqual(screenshots?.detail, DashboardSummary.allClear, "the index finished, so screenshots are current")
@@ -99,7 +116,9 @@ final class DashboardSummaryTests: XCTestCase {
     func testUncheckedPhotosAreNotAllClear() {
         let summary = DashboardSummary(
             phase: .done, volume: roomy, canUseLibrary: true, similar: CategoryTotals(unchecked: 3))
-        XCTAssertEqual(summary.tiles.first { $0.route == .similarPhotos }?.detail, "None found · 3 not checked")
+        let tile = summary.tiles.first { $0.route == .similarPhotos }
+        XCTAssertEqual(tile?.detail, "3 not checked")
+        XCTAssertEqual(tile?.accessibilityDetail, "None found, 3 photos not checked")
     }
 
     /// Regression: with thousands of iCloud-only photos never compared, the storage card still said "All tidy"
@@ -120,9 +139,26 @@ final class DashboardSummaryTests: XCTestCase {
         let videos = CategoryTotals(count: 1, bytes: 0, inCloudBytes: 3_000_000_000)
         let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, videos: videos)
         let detail = summary.tiles.first { $0.route == .largeVideos }?.detail
-        XCTAssertEqual(detail, "1 video · \(Int64(3_000_000_000).byteString) in iCloud")
+        XCTAssertEqual(detail, "1 · \(Int64(3_000_000_000).byteString) in iCloud")
         let unsized = CategoryTotals(count: 2, unsizedCount: 2)
         let shots = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, screenshots: unsized)
-        XCTAssertEqual(shots.tiles.first { $0.route == .screenshots }?.detail, "2 screenshots · size unavailable")
+        XCTAssertEqual(shots.tiles.first { $0.route == .screenshots }?.detail, "2 · size unavailable")
+    }
+
+    /// A partly known size shows only what is known on the short line; VoiceOver hears the rest.
+    func testPartlyKnownSizesKeepTheShortLineShortAndSayTheRest() {
+        let videos = CategoryTotals(count: 3, bytes: 12_000_000, unsizedCount: 1, inCloudBytes: 3_000_000_000)
+        let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, videos: videos)
+        let tile = summary.tiles.first { $0.route == .largeVideos }
+        XCTAssertEqual(tile?.detail, "3 · \(Int64(12_000_000).byteString)")
+        XCTAssertEqual(tile?.accessibilityDetail, "3 videos, at least 12 megabytes, plus 3 gigabytes in iCloud")
+    }
+
+    func testSimilarTileCountsGroups() {
+        let similar = CategoryTotals(count: 150, bytes: 2_900_000, groups: 101)
+        let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, similar: similar)
+        let tile = summary.tiles.first { $0.route == .similarPhotos }
+        XCTAssertEqual(tile?.detail, "101 · \(Int64(2_900_000).byteString)")
+        XCTAssertEqual(tile?.accessibilityDetail, "101 groups, 2.9 megabytes")
     }
 }

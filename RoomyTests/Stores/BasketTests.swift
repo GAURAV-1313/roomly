@@ -12,7 +12,7 @@ final class BasketTests: XCTestCase {
 
         let reloaded = Basket(filename: filename)
         XCTAssertTrue(reloaded.contains("clip"))
-        XCTAssertEqual(reloaded.bytes, 1_234)
+        XCTAssertEqual(reloaded.items["clip"]?.bytes, 1_234)
         XCTAssertEqual(reloaded.items(of: .video).count, 1)
     }
 
@@ -57,7 +57,7 @@ final class BasketTests: XCTestCase {
         XCTAssertEqual(Set(basket.items.keys), ["extra", "shot"], "screenshots are never similar photos")
     }
 
-    /// Regression: the Review total and the bar's size added originals kept only in iCloud.
+    /// Regression: the Review total added originals kept only in iCloud.
     @MainActor
     func testTotalsKeepICloudOriginalsApart() async {
         let basket = makeBasket()
@@ -65,8 +65,6 @@ final class BasketTests: XCTestCase {
             .fixture("cloud", kind: .video, size: 3_000, inCloud: 2_000),
             .fixture("shot", kind: .screenshot, size: 500),
         ])
-        XCTAssertEqual(basket.bytes, 1_500)
-        XCTAssertEqual(basket.bytesInCloud, 2_000)
         let review = ReviewSummary(items: Array(basket.items.values))
         XCTAssertEqual(review.bytes, 1_500, "Review counts only space on this phone")
         XCTAssertEqual(review.bytesInCloud, 2_000, "and names what is kept only in iCloud")

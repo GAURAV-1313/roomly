@@ -17,10 +17,6 @@ final class Basket {
 
     var count: Int { items.count }
     var isEmpty: Bool { items.isEmpty }
-    /// Space the selected assets use on this phone: what deleting them gives back here.
-    var bytes: Int64 { items.values.reduce(0) { $0 + ($1.bytes ?? 0) } }
-    /// Selected originals kept only in iCloud: shown in Review, never added to what it frees on this phone.
-    var bytesInCloud: Int64 { items.values.reduce(0) { $0 + ($1.bytesInCloud ?? 0) } }
 
     func contains(_ id: String) -> Bool { items[id] != nil }
 

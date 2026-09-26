@@ -1,6 +1,6 @@
-// Why: a summary card's big value is one line, so the size on this phone stands alone and any iCloud part moves
-// to the detail line before the counts. These tests pin that split for Similar Photos and Screenshots, and that
-// no count or size the old one-line summaries showed is lost.
+// Why: the numbers under each category title replaced the summary card, so no count or size the card showed may
+// be lost, and none may be made up: an iCloud-only part is named, an unknown size says so. These tests pin the
+// line for Similar Photos, Screenshots and Duplicate Contacts.
 import XCTest
 
 @testable import Roomy
@@ -9,36 +9,37 @@ final class CategoryScreenSummaryTests: XCTestCase {
     private let phoneOnly = SizeTotal(knownBytes: 48_200_000, knownCount: 31)
     private let mixed = SizeTotal(knownBytes: 2_000_000, knownCount: 2, inCloudBytes: 860_000_000)
 
-    func testSimilarSummaryKeepsEveryCount() {
+    func testSimilarSubtitleKeepsEveryCount() {
         let summary = SimilarPhotosSummary(groupCount: 12, extraCount: 31, size: phoneOnly)
-        XCTAssertEqual(summary.value, Int64(48_200_000).byteString)
-        XCTAssertEqual(summary.detail, "12 groups · 31 extras")
+        XCTAssertEqual(summary.subtitle, "\(Int64(48_200_000).byteString) · 12 groups · 31 extras")
+        let single = SimilarPhotosSummary(groupCount: 1, extraCount: 1, size: phoneOnly)
+        XCTAssertEqual(single.subtitle, "\(phoneOnly.text) · 1 group · 1 extra")
     }
 
-    func testSimilarSummaryPutsICloudOnTheDetailLine() {
+    func testSimilarSubtitleNamesTheICloudPart() {
         let summary = SimilarPhotosSummary(groupCount: 2, extraCount: 3, size: mixed)
-        XCTAssertEqual(summary.value, Int64(2_000_000).byteString)
-        XCTAssertEqual(summary.detail, "+ \(Int64(860_000_000).byteString) in iCloud · 2 groups · 3 extras")
+        XCTAssertEqual(summary.subtitle, "\(mixed.text) · 2 groups · 3 extras")
+        XCTAssertTrue(summary.subtitle.contains("\(Int64(860_000_000).byteString) in iCloud"))
     }
 
-    func testSimilarSummaryNeverShowsAMadeUpSize() {
+    func testSimilarSubtitleNeverShowsAMadeUpSize() {
         let summary = SimilarPhotosSummary(groupCount: 1, extraCount: 2, size: SizeTotal(unknownCount: 2))
-        XCTAssertEqual(summary.value, "size unavailable")
+        XCTAssertEqual(summary.subtitle, "size unavailable · 1 group · 2 extras")
     }
 
-    func testScreenshotsSummaryCountsLikeTheDashboardTile() {
-        XCTAssertEqual(ScreenshotsSummary(count: 84, size: phoneOnly).detail, "84 screenshots")
-        XCTAssertEqual(ScreenshotsSummary(count: 1, size: phoneOnly).detail, "1 screenshot")
-        let cloud = ScreenshotsSummary(count: 3, size: mixed)
-        XCTAssertEqual(cloud.value, Int64(2_000_000).byteString)
-        XCTAssertEqual(cloud.detail, "+ \(Int64(860_000_000).byteString) in iCloud · 3 screenshots")
+    func testScreenshotsSubtitleCountsLikeTheDashboardTile() {
+        XCTAssertEqual(ScreenshotsSummary(count: 84, size: phoneOnly).subtitle, "\(phoneOnly.text) · 84 screenshots")
+        XCTAssertEqual(ScreenshotsSummary(count: 1, size: phoneOnly).subtitle, "\(phoneOnly.text) · 1 screenshot")
+        XCTAssertEqual(ScreenshotsSummary(count: 3, size: mixed).subtitle, "\(mixed.text) · 3 screenshots")
     }
 
-    func testMonthDetailKeepsCountAndSize() {
-        XCTAssertEqual(ScreenshotsSummary.monthDetail(count: 24, size: phoneOnly), "24 · \(phoneOnly.text)")
-        XCTAssertEqual(
-            ScreenshotsSummary.monthDetail(
-                count: 2, size: SizeTotal(knownBytes: 1_000, knownCount: 1, unknownCount: 1)),
-            "2 · at least \(Int64(1_000).byteString)")
+    func testContactsSubtitleCountsGroupsAndCardsBeforeAndAfter() {
+        let groups = [
+            ContactGroup(id: "g1", primary: "a", extras: ["b"], reason: .samePhone),
+            ContactGroup(id: "g2", primary: "c", extras: ["d", "e"], reason: .sameEmail),
+            ContactGroup(id: "g3", primary: "f", extras: ["g"], reason: .samePhone),
+        ]
+        XCTAssertEqual(ContactsSummary(groups: groups, extraCardCount: 4).subtitle, "3 groups · 7 cards → 3")
+        XCTAssertEqual(ContactsSummary(groups: [groups[0]], extraCardCount: 1).subtitle, "1 group · 2 cards → 1")
     }
 }

@@ -1,10 +1,11 @@
 // Why: one card answers "how full is this phone and what can go". The headline says the state first, with
 // Roomy perched on the white card below it; the card shows how full in words and as a usage bar, then what
 // can be cleaned up (with any part kept only in iCloud named under it) and, while a scan runs, how many photos it
-// has read in words. The card holds no action and
-// no progress bar: the dashboard's bottom capsule is its one action and its one moving bar. Before the first
-// index arrives the amount is a skeleton, so nothing made up is ever drawn. At accessibility text sizes rows
-// stack instead of squeezing. Matches the Figma "StorageHeroCard v5" component in "Dashboard v5 — option A".
+// has read in words. The amount's caption is a few words in Footnote; VoiceOver hears it as a full sentence. The
+// card holds no action and no progress bar: the dashboard's bottom capsule is its one action and its one moving
+// bar. Before the first index arrives the amount is a skeleton, so nothing made up is ever drawn. At accessibility
+// text sizes rows stack instead of squeezing. Matches the Figma "StorageHeroCard v5" component in "Dashboard v5 —
+// option A".
 import SwiftUI
 
 struct StorageCard: View {
@@ -126,6 +127,7 @@ struct StorageCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(summary.isAmountPending ? summary.heroCaption : summary.heroSpokenLabel)
     }
 
     private var amountValue: some View {
@@ -150,7 +152,7 @@ struct StorageCard: View {
 
     private var amountCaption: some View {
         Text(summary.heroCaption)
-            .font(RoomyFont.subheadline)
+            .font(RoomyFont.footnote)
             .foregroundStyle(RoomyColor.textSecondary)
     }
 }

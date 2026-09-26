@@ -3,7 +3,8 @@
 // cleaned up" above a tile listing a 3 GB video is a made-up value. The number then names what is really
 // there: the iCloud bytes, or how many items have no size. Before the first index arrives nothing is known at all,
 // so the amount is a skeleton rather than "0 KB". With iCloud items included, the card names what its amount
-// leaves out, in the same words as the category cards.
+// leaves out, in the same words as the category cards. The caption is a few words so it sits beside the amount;
+// VoiceOver hears the whole sentence.
 import Foundation
 
 nonisolated extension DashboardSummary {
@@ -51,11 +52,24 @@ nonisolated extension DashboardSummary {
         }
     }
 
+    /// A few words beside the amount. "in iCloud" can only appear with iCloud items included: on this phone's scope
+    /// nothing kept only in iCloud is counted, so the amount is never `.inCloud` there.
     var heroCaption: String {
         switch foundAmount {
-        case .onPhone: phase == .done ? "can be cleaned up" : "found so far"
-        case .inCloud: "in iCloud, not on this phone"
-        case .unsized: phase == .done ? "size unavailable" : "found so far, size unavailable"
+        case .onPhone: phase == .done ? "to clean up" : "found so far"
+        case .inCloud: "in iCloud"
+        case .unsized: SizeTotal.unavailable
+        }
+    }
+
+    /// The amount and its caption as VoiceOver says them, in full words: "312 megabytes can be cleaned up".
+    var heroSpokenLabel: String {
+        switch foundAmount {
+        case .onPhone(let bytes):
+            "\(bytes.spokenByteString) \(phase == .done ? "can be cleaned up" : "found so far")"
+        case .inCloud(let bytes): "\(bytes.spokenByteString) in iCloud, not on this phone"
+        case .unsized(let count):
+            "\(count.counted("item"))\(phase == .done ? "" : " found so far"), \(SizeTotal.unavailable)"
         }
     }
 }

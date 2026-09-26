@@ -13,7 +13,8 @@ final class DashboardHeroTests: XCTestCase {
         let videos = CategoryTotals(count: 1, bytes: 0, inCloudBytes: 3_000_000_000)
         let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, videos: videos)
         XCTAssertEqual(summary.heroValue, Int64(3_000_000_000).byteString)
-        XCTAssertTrue(summary.heroCaption.hasPrefix("in iCloud, not on this phone"))
+        XCTAssertEqual(summary.heroCaption, "in iCloud")
+        XCTAssertEqual(summary.heroSpokenLabel, "3 gigabytes in iCloud, not on this phone")
         XCTAssertEqual(summary.cardTitle, "Ready to clean up")
         XCTAssertEqual(summary.mood, .idle)
     }
@@ -23,12 +24,14 @@ final class DashboardHeroTests: XCTestCase {
         let shots = CategoryTotals(count: 2, unsizedCount: 2)
         let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, screenshots: shots)
         XCTAssertEqual(summary.heroValue, "2 items")
-        XCTAssertTrue(summary.heroCaption.hasPrefix("size unavailable"))
+        XCTAssertEqual(summary.heroCaption, "size unavailable")
+        XCTAssertEqual(summary.heroSpokenLabel, "2 items, size unavailable")
         XCTAssertEqual(summary.cardTitle, "Ready to clean up")
         XCTAssertNotEqual(summary.mood, .resting)
 
         let scanning = DashboardSummary(phase: .comparing, volume: roomy, canUseLibrary: true, screenshots: shots)
-        XCTAssertTrue(scanning.heroCaption.hasPrefix("found so far, size unavailable"))
+        XCTAssertEqual(scanning.heroCaption, "size unavailable")
+        XCTAssertEqual(scanning.heroSpokenLabel, "2 items found so far, size unavailable")
     }
 
     func testBytesOnThePhoneStillLead() {
@@ -36,7 +39,7 @@ final class DashboardHeroTests: XCTestCase {
         let summary = DashboardSummary(
             phase: .done, volume: roomy, canUseLibrary: true, reclaimableBytes: 5_000, videos: videos)
         XCTAssertEqual(summary.heroValue, Int64(5_000).byteString)
-        XCTAssertTrue(summary.heroCaption.hasPrefix("can be cleaned up"))
+        XCTAssertEqual(summary.heroCaption, "to clean up")
     }
 
     /// With iCloud items shown, the storage card names what its amount leaves out, like the category cards.
@@ -67,12 +70,13 @@ final class DashboardHeroTests: XCTestCase {
         let similar = CategoryTotals(count: 0, groups: 2, previewIDs: ["a", "b"])
         let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, similar: similar)
         let tile = summary.tiles.first { $0.route == .similarPhotos }
-        XCTAssertEqual(tile?.detail, "2 groups · nothing suggested")
+        XCTAssertEqual(tile?.detail, "All kept")
+        XCTAssertEqual(tile?.accessibilityDetail, "2 groups, nothing suggested")
         XCTAssertEqual(tile?.preview, .photos(["a", "b"]))
 
         let unchecked = CategoryTotals(count: 0, groups: 1, unchecked: 4)
         let withUnchecked = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, similar: unchecked)
         XCTAssertEqual(
-            withUnchecked.tiles.first { $0.route == .similarPhotos }?.detail, "1 group · nothing suggested")
+            withUnchecked.tiles.first { $0.route == .similarPhotos }?.detail, "All kept")
     }
 }

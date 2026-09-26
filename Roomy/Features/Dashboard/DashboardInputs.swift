@@ -15,10 +15,22 @@ nonisolated struct CategoryTotals: Equatable {
     /// Up to three asset ids to show as thumbnails on the category's card.
     var previewIDs: [String] = []
 
-    var sizeText: String {
-        SizeTotal(
-            knownBytes: bytes, knownCount: count - unsizedCount, unknownCount: unsizedCount, inCloudBytes: inCloudBytes
-        ).text
+    /// The size on a tile's one short line: the known bytes on this phone, the iCloud bytes when nothing found is
+    /// on this phone (only with iCloud items included), or "size unavailable" when no size is known. Never a guess;
+    /// "at least" and the iCloud part are left to the spoken line and the category screen.
+    var shortSizeText: String {
+        if bytes == 0 && inCloudBytes > 0 { return "\(inCloudBytes.byteString) in iCloud" }
+        if bytes == 0 && unsizedCount > 0 { return SizeTotal.unavailable }
+        return bytes.byteString
+    }
+
+    /// The whole size in words for VoiceOver: "at least 12 megabytes, plus 3 gigabytes in iCloud".
+    var spokenSizeText: String {
+        guard unsizedCount == 0 || count > unsizedCount else { return SizeTotal.unavailable }
+        let onPhone = unsizedCount > 0 ? "at least \(bytes.spokenByteString)" : bytes.spokenByteString
+        guard inCloudBytes > 0 else { return onPhone }
+        let inCloud = "\(inCloudBytes.spokenByteString) in iCloud"
+        return bytes > 0 ? "\(onPhone), plus \(inCloud)" : inCloud
     }
 }
 

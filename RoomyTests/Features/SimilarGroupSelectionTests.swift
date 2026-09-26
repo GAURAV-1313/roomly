@@ -29,6 +29,17 @@ final class SimilarGroupSelectionTests: XCTestCase {
         XCTAssertEqual(extras.footer(queuedSize: known), "Keep 1 · Remove 2 · \(Int64(2_000_000).byteString)")
     }
 
+    func testGroupToggleReadsSelectExtrasUntilTheyAllAreIn() {
+        let nothing = SimilarGroupSelection(group: group) { _ in false }
+        XCTAssertEqual(nothing.extrasToggleTitle, "Select extras")
+        XCTAssertEqual(nothing.extrasToggleState, .off)
+        let oneExtra = SimilarGroupSelection(group: group) { $0 == "a" }
+        XCTAssertEqual(oneExtra.extrasToggleState, .off, "the group toggle is on or off; months show the mix")
+        let extras = SimilarGroupSelection(group: group) { $0 != "keeper" }
+        XCTAssertEqual(extras.extrasToggleTitle, "Extras selected")
+        XCTAssertEqual(extras.extrasToggleState, .on)
+    }
+
     /// "Keep N" counts every member that stays, so a queued keeper is not counted as kept.
     func testKeptCountIsMembersLessQueued() {
         let keeperAndOne = SimilarGroupSelection(group: group) { $0 == "keeper" || $0 == "a" }

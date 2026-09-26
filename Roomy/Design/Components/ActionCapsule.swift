@@ -14,6 +14,11 @@ struct ActionCapsule: View {
     var accessibilityValue: String? = nil
     let action: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// The smallest a one-line label may shrink before it would rather be read than fitted.
+    private static let minimumLabelScale = 0.85
+
     var body: some View {
         Button(action: action) {
             Label {
@@ -25,6 +30,10 @@ struct ActionCapsule: View {
             .font(RoomyFont.headline)
             .foregroundStyle(isProminent ? RoomyColor.onAccent : RoomyColor.textPrimary)
             .multilineTextAlignment(.center)
+            // One line at regular sizes, so a capsule beside another never breaks its label in two; at accessibility
+            // sizes the label wraps and the capsule grows instead.
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+            .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 1 : Self.minimumLabelScale)
             .padding(.horizontal, Space.s16)
             .padding(.vertical, Space.s8)
             .frame(maxWidth: .infinity)

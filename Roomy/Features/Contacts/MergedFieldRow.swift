@@ -1,6 +1,7 @@
-// Why: one value the merged card will hold, labelled, with a tag when it comes from a card other than the one
-// being kept, so the person sees exactly what the merge adds (Figma "MergedFieldRow v5"). At accessibility
-// text sizes the tag moves under its value instead of squeezing it.
+// Why: one value the merged card will hold, labelled, with a tag naming the card it comes from when that is not
+// the card being kept, so the person sees exactly what the merge adds. The tag sits on the label line ("Email
+// from card 2"), so the value keeps the full width and the tag stays one line (Figma "Fix 1"). At accessibility
+// text sizes the tag moves under the label, still above the value.
 import SwiftUI
 
 struct MergedFieldRow: View {
@@ -10,20 +11,29 @@ struct MergedFieldRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            labelLine
+            Text(value.text)
+                .font(RoomyFont.subheadline)
+                .foregroundStyle(RoomyColor.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var labelLine: some View {
         let layout =
             dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Space.s4))
-            : AnyLayout(HStackLayout(alignment: .center, spacing: Space.s8))
-        layout {
-            VStack(alignment: .leading, spacing: Space.s2) {
-                Text(label).font(RoomyFont.caption).foregroundStyle(RoomyColor.textSecondary)
-                Text(value.text).font(RoomyFont.subheadline).foregroundStyle(RoomyColor.textPrimary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Space.s2))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: Layout.inlineGap))
+        return layout {
+            Text(label).font(RoomyFont.caption).foregroundStyle(RoomyColor.textSecondary)
             if value.isAdded {
-                ReasonChip(text: "from other card", tint: Route.duplicateContacts.categoryTintSoft)
+                ReasonChip(
+                    text: "from card \(value.sourceCard.formatted())", tint: Route.duplicateContacts.categoryTintSoft,
+                    size: .small)
             }
         }
-        .accessibilityElement(children: .combine)
     }
 }

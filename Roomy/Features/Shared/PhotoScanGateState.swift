@@ -44,4 +44,10 @@ nonisolated enum PhotoScanGateState: Equatable {
         case (_, false): return .content(note: isLimited ? .limitedAccess : nil)
         }
     }
+
+    /// True when the category's own content shows, so its bulk action has something on screen to act on.
+    var showsContent: Bool {
+        if case .content = self { return true }
+        return false
+    }
 }
