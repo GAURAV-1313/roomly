@@ -2,7 +2,9 @@
 
 Figma (Foundations · Components · Screens · Icon): https://www.figma.com/design/vkLwPMTONVGAW83m8B1oK8
 
-- `screens-overview.png` — every v5 screen from Figma (393×852): launch, onboarding, dashboard, the four categories, Review, deleting, result, Settings.
+- `screens-overview.png` — every screen as built, captured in the iOS 27 simulator (dark mode, synthetic test data):
+  launch intro, Welcome, dashboard, Similar Photos, Compare, Screenshots, Large Videos, the video sheet, Duplicate
+  Contacts, Review, the result and Settings. The Figma file holds the designs they were built from.
 - `app-dashboard.png`, `app-dashboard-dark.png` — the dashboard as built, light and dark, in the simulator with a
   synthetic test library.
 - `AppIcon-1024.png` — unmasked master (background + halo + mascot layers) for Icon Composer / the asset catalog.
@@ -32,4 +34,11 @@ Figma (Foundations · Components · Screens · Icon): https://www.figma.com/desi
   mode is unchanged. The app icon has dark and tinted versions.
 - Other Figma sections: "v5 — Category screens & Settings", "v5 — Sheets & delete flow", "v5 — Onboarding, loading
   & motion" (flow, loading-state audit, launch screen, motion spec with Reduce Motion fallbacks).
+- Launch intro (motion, no Figma frame of its own): every launch after onboarding opens with the Welcome stage on
+  its wash for about 2.4 s — capsule full, red with the three-shake signal at 0.2 s, Roomy drops at 0.85 s and
+  lands as the fill sweeps down to green from 0.95 s, pleased at 1.6 s, then a 0.35 s crossfade to the dashboard at
+  2.1 s. No haptic (onboarding keeps its one buzz). A tap skips it; with Reduce Motion it is skipped entirely. The
+  first launch shows the full onboarding instead. Beats: `LaunchIntroBeat`; the scan is already running underneath.
+  The static launch screen is the background colour alone (`LaunchBackground`, light and dark), so Roomy's drop is
+  the first thing that moves and he never flickers from a static image into the animation.
 - Figma renders Inter; the app uses SF Pro. Inter matches SF Pro metrics closely.

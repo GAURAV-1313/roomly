@@ -13,35 +13,60 @@ The mascot is Roomy, a small robin that sits on the storage card and reacts to w
   <img src="design/app-dashboard-dark.png" alt="Dashboard in dark mode" width="300">
 </p>
 
-Every screen, as designed in Figma and built:
+Every screen, as built. Screenshots from the iOS 27 simulator with synthetic test photos and contacts; every screen was designed in Figma first ([file](https://www.figma.com/design/vkLwPMTONVGAW83m8B1oK8)):
 
 ![Every screen](design/screens-overview.png)
 
 ## Build and run
 
-Requirements: Xcode 26.3+ (Xcode 27 to run on an iPhone with iOS 27) and
-[XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+**You need:** a Mac with **Xcode 26.3 or later** (Xcode 27 to install on an iPhone running iOS 27). No packages,
+no accounts, no network: everything builds from this repository.
 
-```bash
-xcodegen generate          # creates Roomy.xcodeproj from project.yml
-open Roomy.xcodeproj
-```
+### Quick start (simulator)
 
-- **Simulator:** pick any iPhone simulator and Run. To get test data, drag photos into the simulator or use
-  `xcrun simctl addmedia booted <files>` (images, videos and `.vcf` contacts all work).
-- **iPhone with a free Apple ID:** `cp Signing.local.xcconfig.example Signing.local.xcconfig` and put your team
-  ID in it (and your own bundle id if `com.gauravsingh.roomy` is taken). The file is ignored by git and survives
-  `xcodegen generate`, which would erase a team picked in Xcode. Free provisioning expires after 7 days; run
-  again from Xcode to renew. Target device: iPhone 16 on iOS 27. See [docs/DEVICE.md](docs/DEVICE.md).
-- **Checks:** `scripts/check.sh` runs the architecture rules, `swift-format` lint, a zero-warning simulator
-  build, the unit tests (275) and an unsigned iPhone build that fails on any warning. `scripts/check.sh --fast`
-  skips the builds.
+1. Clone or unzip the repository, then open **`Roomy.xcodeproj`** in Xcode. The project is committed, so nothing
+   needs generating.
+2. Choose the **Roomy** scheme and any iPhone simulator (iOS 17 or later), then press **Run** (⌘R).
+3. The simulator's library is almost empty. Add test media by dragging photos, videos or a `.vcf` contacts file
+   onto the simulator window, or from Terminal:
+
+   ```bash
+   xcrun simctl addmedia booted ~/Pictures/some-photos/*.jpg ~/Movies/clip.mov ~/Desktop/contacts.vcf
+   ```
+
+   To see similar-photo groups, add the same photo twice, or a few shots taken seconds apart. Add a contact twice
+   with the same phone number to see duplicate contacts. Then tap **Scan again** in Roomy.
+
+### On an iPhone
+
+1. Connect the iPhone, tap **Trust**, and turn on **Settings → Privacy & Security → Developer Mode** (it restarts).
+2. In Xcode → Settings → Accounts, sign in with an Apple ID. A free Personal Team is enough.
+3. Select the **Roomy** target → **Signing & Capabilities** → Team: your team. If Xcode says the bundle id is taken,
+   change it to something unique, such as `com.yourname.roomy`.
+4. Choose the iPhone as the run destination and press **Run**. On first launch, trust the developer on the phone:
+   Settings → General → VPN & Device Management → your Apple ID → Trust.
+
+Free provisioning lasts 7 days. [docs/DEVICE.md](docs/DEVICE.md) has the details, including a signing setup that
+survives regenerating the project.
+
+### Tests and checks
+
+- **Tests:** ⌘U in Xcode runs 318 unit tests (no photo library needed; they use fakes).
+- **Full gate:** `scripts/check.sh` runs the architecture rules, `swift-format` lint, a zero-warning simulator build,
+  the tests, and an unsigned iPhone build that fails on any warning. `scripts/check.sh --fast` skips the builds.
+- **Editing the project structure:** files are listed in `project.yml`; after adding or moving files run
+  `xcodegen generate` ([XcodeGen](https://github.com/yonaskolb/XcodeGen), `brew install xcodegen`).
+
+### Privacy
+
+Roomy runs entirely on the device: it makes no network requests, collects nothing, and has no account. Photos and
+contacts never leave the phone, and nothing is deleted without two confirmations (Roomy's own, then iOS's).
 
 ## What it does
 
 | Area | How |
 |---|---|
-| Onboarding | Three pages: an animated welcome (a storage bar fills, turns red, then sweeps down as Roomy lands), how it works, and permissions in every state; Skip never passes the permissions page. No login or account: the brief puts them out of scope and nothing leaves the phone |
+| Onboarding | Three pages: an animated welcome (a storage bar fills, turns red, then sweeps down as Roomy lands), how it works, and permissions in every state; Skip never passes the permissions page. No login or account: the brief puts them out of scope and nothing leaves the phone. Onboarding shows once; every later launch opens with a two-second version of the welcome story (tap to skip, none with Reduce Motion) while the scan starts underneath |
 | Storage dashboard | Free / used from `volumeAvailableCapacityForImportantUsage` (the closest API to Settings), shown as "92% full" and a tick bar; what the scan can clean up; one bottom capsule that is always the next action: Scan for space, Cancel scan (with progress), Resume scan, Scan again, or Review |
 | Similar photos | 64-bit difference hash per photo; every burst frame grouped by its burst id; duplicates across the whole library (Hamming ≤ 4, every such pair found with 5 LSH bands, crowded bands split again), near-identical shots only within one moment (first to last shot ≤ 60 s, same aspect, Hamming ≤ 10); flat frames (dark, white, blank) never linked on their hash; union-find into groups labelled by what holds for every member; a keeper picked by favourite, the burst pick, resolution, sharpness (Laplacian variance), then size — and you can make any photo the keeper; other favourites and picked burst frames are never selected in bulk |
 | Screenshots | The Photos screenshot subtype, in a month-grouped 9:16 grid |
@@ -74,6 +99,11 @@ open Roomy.xcodeproj
   merge combine values with one shared function. Notes can't be read by apps, so the contacts screen and the
   confirmation say notes on removed cards aren't carried over. A card edited after the scan stops its group
   from merging, and a group Contacts refuses to save (a read-only account) is not offered again.
+- **Scan at launch; stay quiet after.** The full scan (index, then comparing photos, with its progress in the bottom
+  capsule) runs when Roomy launches and when you tap Scan again. Changes made outside Roomy — an iCloud sync, a trip
+  to the Photos app, a new screenshot — only re-read the index, silently, at most every 30 s: whatever is gone leaves
+  every list and new screenshots and videos appear, while new photos join similar groups at the next full scan.
+  Roomy's own deletions and merges update every screen from the cleanup's report, with no rescan.
 - **Merge, not delete, for duplicate contacts.** The brief allows "merge or delete"; Roomy merges.
   - *Delete* would remove the extra cards outright. If one had a second number, a work email or an address the
     other lacked, that detail is gone — and iOS shows no prompt and has no Recently Deleted for contacts.
@@ -105,8 +135,9 @@ open Roomy.xcodeproj
   amount in words underneath. Pending and freed differ in shape (outline, then filled with a check) and words,
   not colour alone.
 - **Calm motion, always optional.** Skeletons shaped like the real layout (shown only if loading takes over
-  0.3 s), a zoom from each category tile into its screen (iOS 18+), a staggered dashboard, and the welcome
-  story. Every animation has a Reduce Motion fallback, and timings live in one `Motion` token file.
+  0.3 s), a zoom from each category tile into its screen (iOS 18+), a staggered dashboard, the welcome
+  story and its short launch version. Every animation has a Reduce Motion fallback, and timings live in the
+  `Motion` token files.
 - **Light, dark and tinted.** Every colour is a light/dark pair, the app icon has dark and tinted versions,
   and Settings can override the system appearance.
 
