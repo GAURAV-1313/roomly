@@ -7,6 +7,9 @@ no account.
 Built for the AppFactory App Builder selection task. iOS 17+, SwiftUI, Swift 6, no third-party packages.
 The mascot is Roomy, a small robin that sits on the storage card and reacts to what the app is doing.
 
+**Landing page:** [Roomy](https://claude.ai/artifact/6J7xWMSi9grH4yfdVELMbs) — features, how it works, and every
+screen in light and dark.
+
 <p align="center">
   <img src="design/app-dashboard.png" alt="Dashboard in light mode" width="300">
   &nbsp;&nbsp;
