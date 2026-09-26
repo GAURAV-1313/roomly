@@ -7,7 +7,7 @@ no account.
 Built for the AppFactory App Builder selection task. iOS 17+, SwiftUI, Swift 6, no third-party packages.
 The mascot is Roomy, a small robin that sits on the storage card and reacts to what the app is doing.
 
-**Landing page:** [roomy-landing-two.vercel.app](https://roomy.nofriction.space) — features, how it works, and every
+**Landing page:** [https://roomy.nofriction.space](https://roomy.nofriction.space) — features, how it works, and every
 screen in light and dark.
 
 <p align="center">
