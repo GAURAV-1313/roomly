@@ -21,7 +21,7 @@ final class ScanStoreTests: XCTestCase {
         XCTAssertEqual(store.videos.map(\.id), ["clip"])
         XCTAssertEqual(store.similarGroups.count, 1)
         XCTAssertEqual(store.similarGroups.first?.members.count, 3)
-        XCTAssertEqual(store.similarExtras.count, 2)
+        XCTAssertEqual(store.allSimilarExtras.count, 2)
     }
 
     /// Regression: tapping Rescan mid-scan let the cancelled scan write "idle" while the new one was running.

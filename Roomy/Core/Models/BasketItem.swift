@@ -39,6 +39,16 @@ nonisolated struct BasketItem: Codable, Sendable, Hashable, Identifiable {
         self.init(id: group.id, kind: .contactGroup, bytes: nil)
     }
 
+    /// Part of the asset was kept only in iCloud when Roomy last measured it.
+    var isInCloud: Bool { (bytesInCloud ?? 0) > 0 }
+
+    /// The same item with the size the scan measured last, so Review counts and holds it by where its files are
+    /// now, not where they were when it was selected. Unchanged when the scan has no size for it.
+    func refreshed(from snapshot: AssetSnapshot?) -> BasketItem {
+        guard kind.isAsset, let snapshot, snapshot.id == id, snapshot.size != nil else { return self }
+        return BasketItem(snapshot)
+    }
+
     /// The size Review shows: the bytes on this phone plus any part kept only in iCloud.
     var size: AssetSize? {
         guard let bytes else { return nil }

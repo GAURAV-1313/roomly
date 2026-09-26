@@ -61,15 +61,21 @@ and a few seconds to rescan. Record the real numbers from Console on the device 
 
 Sizes come from two undocumented `PHAssetResource` keys: `fileSize` and `locallyAvailable`. With iCloud Photos
 and "Optimize iPhone Storage" on, an original can live only in iCloud while Photos still reports its full
-size. The rule is in `AssetSize.measure` and is unit-tested: a file Photos marks as not on the phone is
-labelled "in iCloud" and left out of Reclaimable, the Review total and the Recently Deleted check; a file whose
-availability Photos doesn't report counts as on the phone. The simulator has no iCloud library, so on the
-iPhone 16 with Optimize Storage on:
+size. The rule is in `AssetSize.measure` and is unit-tested: a file Photos marks as not on the phone makes the
+asset "in iCloud"; a file whose availability Photos doesn't report counts as on the phone. By default
+(`LibraryScope.onThisPhone`) such assets are left out of every screen, total and Review, and one already in the
+basket is held there. With Settings → Library → "Include iCloud-only items" on, they are listed, their iCloud
+bytes are named apart ("+ 3 GB in iCloud") and never counted as space on this phone, and deleting them is
+allowed. Photos are sized only when grouped, so a rescan shows the earlier scan's sizes until the comparison
+measures them again; similar photos can't be deleted until then. The simulator has no iCloud library, so on
+the iPhone 16 with Optimize Storage on:
 
 1. Find a large video that Photos shows downloading when you open it (an iCloud-only original).
-2. In Roomy, its row should read "in iCloud", and the Large Videos and Reclaimable totals should not include it.
-3. If it reads as a normal size instead, Photos no longer reports the key: record that here, because sizes
-   then count iCloud originals again.
+2. In Roomy, with the Settings switch off, it should not appear in Large Videos or any total.
+3. Turn the switch on: its row should read "in iCloud", and the Large Videos and Reclaimable totals should name
+   it as "+ … in iCloud" instead of counting it.
+4. If it reads as a normal size instead, Photos no longer reports the key: record that here, because it would
+   then be shown and counted as space on this phone.
 
 ## Burst frames: check on the device
 

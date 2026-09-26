@@ -1,6 +1,8 @@
-// Why: the honest place to see what Roomy can access, choose light or dark, rescan, reset the cache, get back
-// contact backups, and read how deletion actually works on iOS. Access stays first because it is what blocks
-// the app; Display follows it as a one-time preference, above the Scan actions. Nothing here deletes anything, so nothing here is red.
+// Why: the honest place to see what Roomy can access, choose which photos it shows, choose light or dark,
+// rescan, reset the cache, get back contact backups, and read how deletion actually works on iOS. Access stays
+// first because it is what blocks the app; Library follows because it decides what every screen shows and what
+// a delete can reach, and its footnote says so; Display is a one-time preference, above the Scan actions.
+// Nothing here deletes anything, so nothing here is red.
 import SwiftUI
 
 struct SettingsView: View {
@@ -10,6 +12,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Layout.settingsSectionSpacing) {
                 accessSection
+                librarySection
                 displaySection
                 scanSection
                 backupsSection
@@ -40,6 +43,17 @@ struct SettingsView: View {
             .padding(.horizontal, Space.s16)
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s16)
+        }
+    }
+
+    private var librarySection: some View {
+        SettingsSection(
+            "Library",
+            footer: "Off: Roomy shows only photos and videos stored on this iPhone, since only those free space "
+                + "here. On: items kept only in iCloud appear too; deleting them removes them from iCloud and your "
+                + "other devices."
+        ) {
+            LibraryScopeToggle()
         }
     }
 

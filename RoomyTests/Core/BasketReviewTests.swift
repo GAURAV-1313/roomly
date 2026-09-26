@@ -50,6 +50,29 @@ final class BasketReviewTests: XCTestCase {
         XCTAssertEqual(summary.confirmTitle, "Delete 3 items and merge 1 group?")
     }
 
+    /// Regression: an item kept only in iCloud could be selected and deleted, removing it from iCloud and every
+    /// device while freeing nothing here. Selected before the scope changed, it now waits and is never deleted.
+    func testICloudOnlyItemsWaitAndNeverReachTheCleanup() {
+        let saved = [
+            BasketItem(id: "cloud", kind: .video, bytes: 0, bytesInCloud: 3_000),
+            BasketItem(id: "local", kind: .screenshot, bytes: 100),
+        ]
+        let review = BasketReview(
+            items: saved, canUsePhotos: true, canCheckSimilarGroups: true, mergeableGroupIDs: [], scope: .onThisPhone)
+        XCTAssertEqual(review.onlyInICloud.map(\.id), ["cloud"])
+        XCTAssertEqual(review.ready.map(\.id), ["local"])
+        XCTAssertEqual(review.heldCount, 1)
+
+        let plan = CleanupPlan.make(confirmed: review, contactGroups: [:], similarGroups: [])
+        XCTAssertEqual(plan.assetIDs, ["local"])
+        XCTAssertEqual(plan.held.onlyInICloud, 1)
+
+        let included = BasketReview(
+            items: saved, canUsePhotos: true, canCheckSimilarGroups: true, mergeableGroupIDs: [],
+            scope: .includingICloud)
+        XCTAssertEqual(included.ready.map(\.id), ["cloud", "local"])
+    }
+
     func testNothingWaitsOnceEverythingCanRun() {
         let review = BasketReview(
             items: items, canUsePhotos: true, canCheckSimilarGroups: true, mergeableGroupIDs: ["merge", "stale"])

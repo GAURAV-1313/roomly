@@ -15,6 +15,8 @@ struct FakePhotoSource: PhotoSource {
     var tiles = HashTiles(gray9x8: Self.texture(count: 72), gray32: Self.texture(count: 1024))
     /// Photos whose size Photos cannot tell, as happens when no resource answers the size key.
     var unsizedIDs: Set<String> = []
+    /// Photos whose files Photos says are kept only in iCloud ("Optimize iPhone Storage").
+    var inCloudIDs: Set<String> = []
 
     func indexLibrary() -> AsyncStream<IndexEvent> {
         AsyncStream { continuation in
@@ -33,8 +35,12 @@ struct FakePhotoSource: PhotoSource {
 
     func fileSizes(for ids: [String]) async -> [String: AssetSize] {
         Dictionary(
-            Set(ids).subtracting(unsizedIDs).map { ($0, AssetSize(bytes: 1_000)) },
+            Set(ids).subtracting(unsizedIDs).map { ($0, AssetSize(bytes: 1_000, inCloudOnly: size(inCloud: $0))) },
             uniquingKeysWith: { first, _ in first })
+    }
+
+    private func size(inCloud id: String) -> Int64 {
+        inCloudIDs.contains(id) ? 1_000 : 0
     }
 
     func hashTiles(for id: String) async -> HashTiles? {

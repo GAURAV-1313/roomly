@@ -28,6 +28,11 @@ final class ChangingPhotoSource: PhotoSource {
         }
     }
 
+    /// Swaps in a whole new library, sizes and all, as when Photos offloads or downloads originals.
+    func replaceLibrary(_ library: FakePhotoSource) {
+        state.withLock { $0.library = library }
+    }
+
     func indexLibrary() -> AsyncStream<IndexEvent> {
         state.withLock { state in
             state.indexCount += 1

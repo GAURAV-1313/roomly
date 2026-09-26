@@ -4,6 +4,9 @@
 // `.stopped`, never `.done`: an unfinished comparison must not read as "no similar photos". Assets a cleanup
 // removed stay removed even when a scan that read the library before the cleanup finishes after it. A keeper
 // the person chose in Compare lives here, the one place groups are stored (see `KeeperChoices`).
+// Screens read the results through `ScanStore+Scope`, filtered by `scope`; the `all…` lists are the whole
+// library, for the cleanup's group checks. A size carried over from an earlier scan never outlives fresh data:
+// see `applyIndex`.
 import Foundation
 import Observation
 
@@ -22,11 +25,14 @@ final class ScanStore {
     private(set) var phase: ScanPhase = .idle
     private(set) var indexProgress = IndexProgress()
     private(set) var hashProgress = HashProgress()
-    private(set) var screenshots: [AssetSnapshot] = []
+    private(set) var allScreenshots: [AssetSnapshot] = []
     /// Most space on this phone first; videos kept only in iCloud come after, largest first.
-    private(set) var videos: [AssetSnapshot] = []
-    private(set) var similarGroups: [SimilarGroup] = []
-    /// True once the current index has been compared and grouped, so `similarGroups` is the whole answer.
+    private(set) var allVideos: [AssetSnapshot] = []
+    /// Every group, whatever the scope. The cleanup checks these, so it never empties a group.
+    private(set) var allSimilarGroups: [SimilarGroup] = []
+    /// What the screens show and count. Set only through `AppState.libraryScope`, which saves it.
+    var scope = LibraryScope.onThisPhone
+    /// True once the current index has been compared and grouped, so `allSimilarGroups` is the whole answer.
     private(set) var hasFinishedGrouping = false
     /// Photos the last comparison could not read, so they were not checked for similar shots.
     private(set) var uncheckedPhotoCount = 0
@@ -58,15 +64,6 @@ final class ScanStore {
     func snapshots(_ ids: some Sequence<String>) -> [AssetSnapshot] { ids.compactMap { snapshotsByID[$0] } }
     func bytes(of ids: some Sequence<String>) -> Int64 { snapshots(ids).totalBytes }
     func sizeTotal(of ids: some Sequence<String>) -> SizeTotal { snapshots(ids).sizeTotal }
-    func similarGroup(_ id: String) -> SimilarGroup? { similarGroups.first { $0.id == id } }
-
-    /// Every non-keeper photo across all groups: what a person may remove.
-    var similarExtras: [String] { similarGroups.flatMap(\.extras) }
-    /// The extras Roomy suggests, leaving out any the person marked in Photos. Totals and bulk selection use it.
-    var suggestedExtras: [String] { similarGroups.flatMap(\.suggestedExtras) }
-    var similarBytes: Int64 { bytes(of: suggestedExtras) }
-    var similarSize: SizeTotal { sizeTotal(of: suggestedExtras) }
-    var reclaimableBytes: Int64 { screenshots.totalBytes + videos.totalBytes + similarBytes }
 
     func scan() {
         scanTask?.cancel()
@@ -124,15 +121,15 @@ final class ScanStore {
         for id in ids {
             snapshotsByID.removeValue(forKey: id)
         }
-        screenshots.removeAll { ids.contains($0.id) }
-        videos.removeAll { ids.contains($0.id) }
-        similarGroups = SimilarGroupPruning.groups(similarGroups, without: ids, queued: queued)
+        allScreenshots.removeAll { ids.contains($0.id) }
+        allVideos.removeAll { ids.contains($0.id) }
+        allSimilarGroups = SimilarGroupPruning.groups(allSimilarGroups, without: ids, queued: queued)
     }
 
     /// Makes `id` the keeper of the group that holds it, replacing any earlier choice in that group.
     func makeKeeper(_ id: String) {
-        guard let index = similarGroups.firstIndex(where: { $0.members.contains(id) }) else { return }
-        similarGroups[index] = keeperChoices.choose(id, in: similarGroups[index])
+        guard let index = allSimilarGroups.firstIndex(where: { $0.members.contains(id) }) else { return }
+        allSimilarGroups[index] = keeperChoices.choose(id, in: allSimilarGroups[index])
     }
 
     /// Waits for the current scan to finish or stop.
@@ -152,10 +149,11 @@ final class ScanStore {
         case .comparing(let progress):
             hashProgress = progress
         case .grouped(let groups, let sizes, let unchecked):
-            for (id, size) in sizes {
-                snapshotsByID[id]?.size = size
+            // Fresh sizes replace every carried one; a member Photos gave no size to reads "size unavailable".
+            for id in groups.lazy.flatMap(\.members) {
+                snapshotsByID[id]?.size = sizes[id]
             }
-            similarGroups = keeperChoices.applied(
+            allSimilarGroups = keeperChoices.applied(
                 to: SimilarGroupPruning.groups(groups, without: removedSinceScanStarted, queued: []),
                 libraryIDs: allIDs, unchecked: unchecked)
             hasFinishedGrouping = true
@@ -165,11 +163,13 @@ final class ScanStore {
     }
 
     /// Earlier groups stay, minus photos that are gone, until the new comparison replaces them, so a rescan
-    /// never empties the Similar screen. Known sizes of unchanged photos carry over for the same reason.
+    /// never empties the Similar screen. Known sizes of unchanged photos carry over for the same reason, until
+    /// the comparison measures them again. Screenshots and videos are measured by the index itself, so their
+    /// fresh size, even an unknown one, always wins: an old one would keep a stale "in iCloud".
     private func applyIndex(_ snapshots: [AssetSnapshot]) {
         var fresh = Dictionary(snapshots.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         for (id, old) in snapshotsByID {
-            guard let size = old.size, var current = fresh[id], current.size == nil,
+            guard let size = old.size, var current = fresh[id], current.kind == .photo, current.size == nil,
                 current.modificationDate == old.modificationDate
             else { continue }
             current.size = size
@@ -177,9 +177,9 @@ final class ScanStore {
         }
         let gone = Set(snapshotsByID.keys).subtracting(fresh.keys)
         snapshotsByID = fresh
-        screenshots = snapshots.compactMap { $0.kind == .screenshot ? fresh[$0.id] : nil }
-        videos = snapshots.compactMap { $0.kind == .video ? fresh[$0.id] : nil }.sorted(by: Self.freesMoreSpace)
-        similarGroups = SimilarGroupPruning.groups(similarGroups, without: gone, queued: [])
+        allScreenshots = snapshots.compactMap { $0.kind == .screenshot ? fresh[$0.id] : nil }
+        allVideos = snapshots.compactMap { $0.kind == .video ? fresh[$0.id] : nil }.sorted(by: Self.freesMoreSpace)
+        allSimilarGroups = SimilarGroupPruning.groups(allSimilarGroups, without: gone, queued: [])
     }
 
     /// Orders by what deleting would give back on this phone, then by full size, so the top of the list is

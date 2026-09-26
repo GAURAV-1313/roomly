@@ -21,6 +21,18 @@ final class ReviewSummaryTests: XCTestCase {
         XCTAssertTrue(both.confirmMessage.contains("backup"))
     }
 
+    /// Regression: the confirmation never said that with iCloud Photos on, a delete reaches every device.
+    func testConfirmationSaysDeletingReachesICloud() {
+        let sentence = "If iCloud Photos is on, they're also removed from iCloud and your other devices."
+        XCTAssertTrue(ReviewSummary(assetCount: 1).confirmMessage.contains(sentence))
+        XCTAssertFalse(ReviewSummary(contactGroupCount: 1).confirmMessage.contains("iCloud"))
+    }
+
+    func testItemsHeldInICloudAreNamedInTheResult() {
+        let report = CleanupReport(assets: AssetRemoval(removedIDs: ["a"]), held: HeldItems(onlyInICloud: 2))
+        XCTAssertTrue(ResultSummary(report: report).text.contains("2 items kept only in iCloud weren't deleted"))
+    }
+
     /// Regression: the confirmation promised one iOS prompt, but every 1,000 items bring another.
     func testConfirmationSaysHowManyTimesIOSWillAsk() {
         XCTAssertTrue(ReviewSummary(assetCount: 1_000).confirmMessage.contains("iOS will ask you once more."))

@@ -1,6 +1,7 @@
 // Why: Review may only offer what a cleanup can really do. A saved basket can hold photos while Photos access
 // is off, similar photos before this session has compared them (so no one can check each group keeps a photo),
-// or contact merges Roomy can't resolve yet. Showing them with made-up names or counting them in the
+// contact merges Roomy can't resolve yet, or items kept only in iCloud selected before Roomy was set to show only
+// this phone. Showing them with made-up names or counting them in the
 // confirmation would promise work that can't happen safely. They wait here, outside every count, until they can.
 import Foundation
 
@@ -13,14 +14,18 @@ nonisolated struct BasketReview: Equatable {
     private(set) var waitingForComparison: [BasketItem] = []
     /// Contact merges whose group Roomy can't see right now (no full access, or the scan hasn't read it).
     private(set) var waitingForContacts: [BasketItem] = []
+    /// Photos and videos kept only in iCloud while `scope` leaves them out, so a stale selection can't delete them.
+    private(set) var onlyInICloud: [BasketItem] = []
 
     init(
         items: some Sequence<BasketItem>, canUsePhotos: Bool, canCheckSimilarGroups: Bool,
-        mergeableGroupIDs: Set<String>
+        mergeableGroupIDs: Set<String>, scope: LibraryScope = .onThisPhone
     ) {
         for item in items.sorted(by: { $0.id < $1.id }) {
             if item.kind.isAsset && !canUsePhotos {
                 waitingForPhotos.append(item)
+            } else if !item.isInScope(scope) {
+                onlyInICloud.append(item)
             } else if item.kind == .photo && !canCheckSimilarGroups {
                 waitingForComparison.append(item)
             } else if item.kind == .contactGroup && !mergeableGroupIDs.contains(item.id) {
@@ -31,13 +36,13 @@ nonisolated struct BasketReview: Equatable {
         }
     }
 
-    var isEmpty: Bool {
-        ready.isEmpty && waitingForPhotos.isEmpty && waitingForComparison.isEmpty && waitingForContacts.isEmpty
-    }
+    var isEmpty: Bool { ready.isEmpty && heldCount == 0 }
     /// Sum of known sizes of the ready items; unknown sizes count as zero, never as a guess.
     var readyBytes: Int64 { ready.reduce(0) { $0 + ($1.bytes ?? 0) } }
     /// Saved items that can't run yet, whatever the reason.
-    var heldCount: Int { waitingForPhotos.count + waitingForComparison.count + waitingForContacts.count }
+    var heldCount: Int {
+        waitingForPhotos.count + waitingForComparison.count + waitingForContacts.count + onlyInICloud.count
+    }
     /// The Review capsule's title; nil only when the basket is empty. Held items still open Review, where their
     /// note says why they wait and offers the way out, but they are never counted as ready.
     var barTitle: String? {

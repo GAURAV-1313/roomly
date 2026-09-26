@@ -11,7 +11,7 @@ nonisolated struct ResultNotes: Equatable {
             unavailable.map { ResultLine(kind: .notFound, text: $0) },
             spared.map { ResultLine(kind: .kept, text: $0) },
         ].compactMap { $0 }
-            + [waitingForPhotos, waitingForComparison, waitingForContacts].compactMap { $0 }
+            + [waitingForPhotos, waitingForComparison, waitingForContacts, onlyInICloud].compactMap { $0 }
             .map { ResultLine(kind: .held, text: $0) }
     }
 
@@ -54,6 +54,17 @@ nonisolated struct ResultNotes: Equatable {
             one: "1 contact merge didn't run, because Roomy can't find that group in your contacts right now.",
             many: {
                 "\($0) contact merges didn't run, because Roomy can't find those groups in your contacts right now."
+            })
+    }
+
+    private var onlyInICloud: String? {
+        Self.sentence(
+            report.held.onlyInICloud,
+            one: "1 item kept only in iCloud wasn't deleted, because Roomy shows only this iPhone. "
+                + "It's still in Review.",
+            many: {
+                "\($0) items kept only in iCloud weren't deleted, because Roomy shows only this iPhone. "
+                    + "They're still in Review."
             })
     }
 

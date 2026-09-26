@@ -1,6 +1,7 @@
 // Why: items in the basket that can't run yet are said plainly instead of listed with invented names or
 // counted in the confirmation: what is waiting, why, and the two ways out — fix the cause, or take them out
-// of Review. They stay saved, so they come back on their own once they can run.
+// of Review. Items kept only in iCloud get no shortcut: including them is a choice made in Settings, beside the
+// words that say what deleting them does. They stay saved, so they come back on their own once they can run.
 import SwiftUI
 
 struct ReviewHoldNotes: View {
@@ -24,6 +25,12 @@ struct ReviewHoldNotes: View {
             HoldNote(
                 title: "\(review.waitingForContacts.count.counted("contact merge")) on hold",
                 message: contactsMessage, action: contactsAction, onRemove: { remove(review.waitingForContacts) })
+        }
+        if !review.onlyInICloud.isEmpty {
+            HoldNote(
+                title: "\(review.onlyInICloud.count.counted("item")) on hold",
+                message: "Kept only in iCloud. Turn on Include iCloud-only items in Settings to review them.",
+                action: nil, onRemove: { remove(review.onlyInICloud) })
         }
     }
 

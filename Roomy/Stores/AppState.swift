@@ -3,7 +3,8 @@
 // running a cleanup and applying its result (`AppState+Cleanup`) — live on this type. Views reach it with
 // @Environment.
 // It also keeps the scan in step with the library through `LibraryWatcher`: a change made outside Roomy leads
-// to a refresh.
+// to a refresh. The library scope is the person's choice, so it is saved here; it takes effect on the scan
+// store, which every screen reads, so the value itself lives in one place.
 import Foundation
 import Observation
 
@@ -19,13 +20,17 @@ final class AppState {
     private(set) var volume = VolumeStats.current()
     private let hashCache = HashCache()
     private let watcher: LibraryWatcher
+    private let defaults: UserDefaults
 
     init(
         library: PhotoLibrary = PhotoLibrary(), contactSource: any ContactSource = ContactBook(),
-        cleaner: any Cleaner = DeletionService(), libraryChanges: any LibraryChangeSource = PhotoLibraryChanges()
+        cleaner: any Cleaner = DeletionService(), libraryChanges: any LibraryChangeSource = PhotoLibraryChanges(),
+        defaults: UserDefaults = .standard
     ) {
         self.library = library
+        self.defaults = defaults
         let scan = ScanStore(source: library, cache: hashCache, keeperFilename: "roomy-keepers.json")
+        scan.scope = defaults.string(forKey: LibraryScope.storageKey).flatMap(LibraryScope.init) ?? .onThisPhone
         let cleanup = CleanupStore(cleaner: cleaner)
         let access = photoAccess
         self.scan = scan
@@ -37,6 +42,15 @@ final class AppState {
         // With access already granted, the scan starts here rather than when the dashboard appears, so its first
         // frame shows the scan running instead of flashing "Not scanned yet".
         startScansIfNeeded()
+    }
+
+    /// Which items Roomy shows, counts and may delete. Changing it updates every screen at once, without a rescan.
+    var libraryScope: LibraryScope {
+        get { scan.scope }
+        set {
+            scan.scope = newValue
+            defaults.set(newValue.rawValue, forKey: LibraryScope.storageKey)
+        }
     }
 
     /// Duplicate contacts need the whole address book; a partial view would miss most duplicates.
@@ -121,7 +135,8 @@ final class AppState {
         photoAccess.refresh()
         contactAccess.refresh()
         let plan = CleanupPlan.make(
-            confirmed: review(of: confirmed), contactGroups: contacts.groupsByID, similarGroups: scan.similarGroups)
+            confirmed: review(of: confirmed), contactGroups: contacts.groupsByID,
+            similarGroups: scan.allSimilarGroups)
         // Measured now rather than reused from the last foreground, so any rise is counted from this moment.
         // An empty plan (everything vanished since Review opened) still ends in a result, never in silence.
         volume = .current()

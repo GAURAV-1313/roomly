@@ -12,6 +12,10 @@ nonisolated struct HeldItems: Sendable, Equatable {
     var waitingForComparison = 0
     /// Contact merges whose group Roomy can't find right now.
     var waitingForContacts = 0
+    /// Photos and videos kept only in iCloud, while Roomy shows only what is on this phone.
+    var onlyInICloud = 0
 
-    var isEmpty: Bool { waitingForPhotos == 0 && waitingForComparison == 0 && waitingForContacts == 0 }
+    var isEmpty: Bool {
+        waitingForPhotos == 0 && waitingForComparison == 0 && waitingForContacts == 0 && onlyInICloud == 0
+    }
 }

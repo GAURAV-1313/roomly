@@ -2,7 +2,8 @@
 // here. When everything found is kept only in iCloud or has no known size, that count is zero, and "0 KB can be
 // cleaned up" above a tile listing a 3 GB video is a made-up value. The number then names what is really
 // there: the iCloud bytes, or how many items have no size. Before the first index arrives nothing is known at all,
-// so the amount is a skeleton rather than "0 KB".
+// so the amount is a skeleton rather than "0 KB". With iCloud items included, the card names what its amount
+// leaves out, in the same words as the category cards.
 import Foundation
 
 nonisolated extension DashboardSummary {
@@ -21,8 +22,18 @@ nonisolated extension DashboardSummary {
 
     var foundAmount: FoundAmount {
         if reclaimableBytes > 0 || foundCount == 0 { return .onPhone(reclaimableBytes) }
-        let inCloud = similar.inCloudBytes + screenshots.inCloudBytes + videos.inCloudBytes
-        return inCloud > 0 ? .inCloud(inCloud) : .unsized(foundCount)
+        return foundInCloudBytes > 0 ? .inCloud(foundInCloudBytes) : .unsized(foundCount)
+    }
+
+    /// "+ 3 GB in iCloud" under an amount on this phone; nil when nothing found is kept only in iCloud, or when
+    /// the amount already is the iCloud bytes.
+    var heroCloudNote: String? {
+        guard case .onPhone(let bytes) = foundAmount else { return nil }
+        return SizeTotal(knownBytes: bytes, inCloudBytes: foundInCloudBytes).inCloudNote
+    }
+
+    private var foundInCloudBytes: Int64 {
+        similar.inCloudBytes + screenshots.inCloudBytes + videos.inCloudBytes
     }
 
     /// While the library is read for the first time nothing has been found or counted, so there is no amount

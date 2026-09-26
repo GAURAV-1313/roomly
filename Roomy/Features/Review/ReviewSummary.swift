@@ -1,6 +1,7 @@
 // Why: the words on the one destructive button and its confirmation must say exactly what will happen —
 // delete, merge, or both, and how many times iOS will ask — so they are computed here, from counts of what
-// can really run, and tested.
+// can really run, and tested. With iCloud Photos on, a delete reaches iCloud and every device, and the
+// confirmation is the last place to say so.
 import Foundation
 
 nonisolated struct ReviewSummary: Equatable {
@@ -71,7 +72,7 @@ nonisolated struct ReviewSummary: Equatable {
     var confirmMessage: String {
         var parts: [String] = []
         if hasAssets {
-            parts.append("\(Self.assetsNote) \(promptNote)")
+            parts.append("\(Self.assetsNote) \(Self.iCloudNote) \(promptNote)")
         }
         if hasContacts {
             parts.append(
@@ -90,6 +91,7 @@ nonisolated struct ReviewSummary: Equatable {
     }
 
     private static let assetsNote = "Photos and videos move to Recently Deleted and stay there for 30 days."
+    private static let iCloudNote = "If iCloud Photos is on, they're also removed from iCloud and your other devices."
     private static let contactsNote = "Duplicate cards become one card each, and a backup of every card is saved first."
 
     private var promptNote: String {

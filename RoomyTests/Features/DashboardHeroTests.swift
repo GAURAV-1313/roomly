@@ -39,6 +39,20 @@ final class DashboardHeroTests: XCTestCase {
         XCTAssertTrue(summary.heroCaption.hasPrefix("can be cleaned up"))
     }
 
+    /// With iCloud items shown, the storage card names what its amount leaves out, like the category cards.
+    func testTheCardNamesWhatIsKeptOnlyInICloud() {
+        let videos = CategoryTotals(count: 2, bytes: 5_000, inCloudBytes: 3_000_000_000)
+        let summary = DashboardSummary(
+            phase: .done, volume: roomy, canUseLibrary: true, reclaimableBytes: 5_000, videos: videos)
+        XCTAssertEqual(summary.heroCloudNote, "+ \(Int64(3_000_000_000).byteString) in iCloud")
+
+        let cloudOnly = CategoryTotals(count: 1, bytes: 0, inCloudBytes: 3_000_000_000)
+        XCTAssertNil(
+            DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true, videos: cloudOnly).heroCloudNote,
+            "the amount already is the iCloud bytes")
+        XCTAssertNil(DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true).heroCloudNote)
+    }
+
     func testAnEmptyScanStillReadsZeroAndTidy() {
         let summary = DashboardSummary(phase: .done, volume: roomy, canUseLibrary: true)
         XCTAssertEqual(summary.foundAmount, .onPhone(0))

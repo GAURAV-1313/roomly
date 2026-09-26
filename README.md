@@ -86,6 +86,14 @@ open Roomy.xcodeproj
     it would only ever lose data compared with merge, so it was left out on purpose.
 - **Contacts need full access.** With iOS 18 limited access Roomy would see a handful of cards and miss most
   duplicates, so it explains that instead of showing a misleadingly short list.
+- **Only this iPhone, unless you ask.** With iCloud Photos and "Optimize iPhone Storage", many originals live
+  only in iCloud: deleting one frees almost nothing here, yet removes it from iCloud and every device. So by
+  default Roomy shows, counts and deletes only items stored on this iPhone; Settings → Library → "Include
+  iCloud-only items" adds the rest, with their iCloud size named apart ("+ 3 GB in iCloud"). One rule
+  (`LibraryScope`) filters every screen, total and Select All, and Review holds anything outside the scope, so
+  a stale selection can't delete it. A similar group whose keeper is only in iCloud is hidden rather than shown
+  with a stand-in keeper. The confirmation says that with iCloud Photos on, deleting also removes items from
+  iCloud and your other devices.
 - **File sizes via `PHAssetResource` KVC.** There is no public size API; every cleaner reads `fileSize` this
   way. It is optional everywhere: unknown sizes read "size unavailable" and never count as a guess.
 - **Designed in Figma first** ([file](https://www.figma.com/design/vkLwPMTONVGAW83m8B1oK8)): every screen,

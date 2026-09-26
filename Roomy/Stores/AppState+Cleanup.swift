@@ -1,6 +1,7 @@
 // Why: a cleanup's report is applied to every store in one place, so the basket, the scan and the contact
 // lists all agree on what is gone, what was kept and what must be read again. Review is derived here from the
-// same rules the cleanup plan uses, so what Review offers is exactly what a cleanup may run.
+// same rules the cleanup plan uses, so what Review offers is exactly what a cleanup may run. Its items carry the
+// sizes the scan measured last, so an item kept only in iCloud is held by where its files are now.
 import Foundation
 
 extension AppState {
@@ -28,14 +29,16 @@ extension AppState {
 
     func review(of items: some Sequence<BasketItem>) -> BasketReview {
         BasketReview(
-            items: items, canUsePhotos: photoAccess.state.canUse, canCheckSimilarGroups: scan.hasFinishedGrouping,
-            mergeableGroupIDs: canScanContacts ? Set(contacts.groups.map(\.id)) : [])
+            items: items.map { $0.refreshed(from: scan.snapshot($0.id)) }, canUsePhotos: photoAccess.state.canUse,
+            canCheckSimilarGroups: scan.hasFinishedGrouping,
+            mergeableGroupIDs: canScanContacts ? Set(contacts.groups.map(\.id)) : [], scope: libraryScope)
     }
 
-    /// A photo that is now its group's keeper, or in no group, is never left queued for removal.
+    /// A photo that is now its group's keeper, or in no group, is never left queued for removal. Photos the scope
+    /// hides stay queued: Review holds them and says why, rather than dropping a selection without a word.
     func reconcilePhotoSelection() {
         guard scan.phase == .done || scan.phase == .stopped else { return }
         basket.reconcile(
-            libraryIDs: scan.allIDs, removablePhotos: scan.hasFinishedGrouping ? Set(scan.similarExtras) : nil)
+            libraryIDs: scan.allIDs, removablePhotos: scan.hasFinishedGrouping ? Set(scan.allSimilarExtras) : nil)
     }
 }

@@ -1,5 +1,6 @@
 // Why: the dashboard summary is a pure value built from plain inputs so its rules can be unit-tested. This is the
-// one place that reads those inputs from the live stores, kept apart from the view so the view stays layout.
+// one place that reads those inputs from the live stores, kept apart from the view so the view stays layout. It
+// reads the scan's scoped views, so the tiles and the storage card count exactly what the category screens list.
 import Foundation
 
 extension DashboardSummary {

@@ -41,6 +41,10 @@ final class ScanStoreGroupingTests: XCTestCase {
         store.scan()
         await store.waitForScan()
 
+        XCTAssertEqual(store.videos.map(\.id), ["local"], "only this phone's videos are shown by default")
+        XCTAssertEqual(store.reclaimableBytes, 40_000_000)
+
+        store.scope = .includingICloud
         XCTAssertEqual(store.videos.map(\.id), ["mixed", "local", "cloud"])
         XCTAssertEqual(store.reclaimableBytes, 140_000_000)
     }
@@ -58,7 +62,7 @@ final class ScanStoreGroupingTests: XCTestCase {
         store.makeKeeper(chosen)
         XCTAssertEqual(store.similarGroups.first?.best, chosen)
         XCTAssertEqual(store.similarGroups.first?.members.first, chosen)
-        XCTAssertFalse(store.similarExtras.contains(chosen))
+        XCTAssertFalse(store.allSimilarExtras.contains(chosen))
 
         store.scan()
         await store.waitForScan()

@@ -1,6 +1,7 @@
 // Why: one card answers "how full is this phone and what can go". The headline says the state first, with
 // Roomy perched on the white card below it; the card shows how full in words and as a usage bar, then what
-// can be cleaned up and, while a scan runs, how many photos it has read in words. The card holds no action and
+// can be cleaned up (with any part kept only in iCloud named under it) and, while a scan runs, how many photos it
+// has read in words. The card holds no action and
 // no progress bar: the dashboard's bottom capsule is its one action and its one moving bar. Before the first
 // index arrives the amount is a skeleton, so nothing made up is ever drawn. At accessibility text sizes rows
 // stack instead of squeezing. Matches the Figma "StorageHeroCard v5" component in "Dashboard v5 — option A".
@@ -89,7 +90,12 @@ struct StorageCard: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: Space.s12) {
-            amount
+            VStack(alignment: .leading, spacing: Space.s4) {
+                amount
+                if let note = summary.heroCloudNote {
+                    Text(note).font(RoomyFont.footnote).foregroundStyle(RoomyColor.textSecondary)
+                }
+            }
             if summary.isScanning {
                 Text(summary.progressText)
                     .font(RoomyFont.footnote)

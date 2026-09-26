@@ -30,7 +30,7 @@ nonisolated struct CleanupPlan: Sendable, Equatable {
 
     /// Builds the plan from exactly what the person confirmed, never from what joined the basket since. Whatever of
     /// it can't run safely now — Photos access is off, a rescan is comparing the library, a merge's group is
-    /// gone — is held.
+    /// gone, an item is kept only in iCloud while Roomy shows only this phone — is held.
     static func make(
         confirmed review: BasketReview, contactGroups: [String: ContactGroup], similarGroups: [SimilarGroup]
     ) -> CleanupPlan {
@@ -38,6 +38,7 @@ nonisolated struct CleanupPlan: Sendable, Equatable {
         plan.held.waitingForPhotos += review.waitingForPhotos.count
         plan.held.waitingForComparison += review.waitingForComparison.count
         plan.held.waitingForContacts += review.waitingForContacts.count
+        plan.held.onlyInICloud += review.onlyInICloud.count
         return plan
     }
 
