@@ -17,7 +17,7 @@ final class LibraryRefreshPolicyTests: XCTestCase {
     func testAChangeAfterAFinishedScanRescans() {
         var policy = LibraryRefreshPolicy()
         policy.cover(through: 2)
-        XCTAssertEqual(refresh(policy, after: 3), .rescan)
+        XCTAssertEqual(refresh(policy, after: 3), .reindex)
     }
 
     func testChangesAScanAlreadyCoversAreSkipped() {
@@ -35,7 +35,7 @@ final class LibraryRefreshPolicyTests: XCTestCase {
         XCTAssertEqual(refresh(policy, after: 4, isCleaningUp: true), LibraryRefreshPolicy.Refresh.none)
         policy.cover(through: 4)
         XCTAssertEqual(refresh(policy, after: 4), LibraryRefreshPolicy.Refresh.none)
-        XCTAssertEqual(refresh(policy, after: 5), .rescan)
+        XCTAssertEqual(refresh(policy, after: 5), .reindex)
     }
 
     /// Regression: after the person stopped a comparison, a video deleted in Photos stayed listed until Resume.

@@ -1,7 +1,8 @@
 // Why: people delete, add and re-pick photos outside Roomy, and every screen must follow. This store turns the
 // stream of library changes into refreshes by the rules in `LibraryRefreshPolicy`: a running scan finishes
-// first instead of restarting, Roomy's own cleanup never triggers one, a stopped comparison only has its index
-// re-read, and automatic refreshes keep a gap so a syncing library isn't scanned without pause. Photos reports
+// first instead of restarting, Roomy's own cleanup never triggers one, a change outside Roomy only has the index
+// re-read (quietly, never the full scan with its progress), and automatic refreshes keep a gap so a syncing
+// library isn't re-read without pause. Photos reports
 // a cleanup's own deletion asynchronously, in no documented order with the cleanup's completion, so changes
 // that arrive shortly after a cleanup ends are counted as its own too. It receives the change source as a
 // protocol, so these transitions are tested with a fake.
@@ -98,8 +99,6 @@ final class LibraryWatcher {
         switch refresh(after: generation) {
         case .none:
             return
-        case .rescan:
-            startScan()
         case .reindex:
             policy.cover(through: source.generation)
             scan.refreshIndex()

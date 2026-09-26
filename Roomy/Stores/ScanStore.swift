@@ -83,10 +83,11 @@ final class ScanStore {
         }
     }
 
-    /// Reads the index again without comparing, for a comparison the person stopped: screenshots and videos
-    /// stay current, and the comparison waits until they resume it.
+    /// Reads the index again without comparing, quietly: the phase stays as it is and no progress shows. Used when
+    /// the library changes outside Roomy, after a finished scan or a stopped comparison, so every list drops what
+    /// is gone and picks up new screenshots and videos; comparing waits for the next full scan.
     func refreshIndex() {
-        guard phase == .stopped else { return }
+        guard phase == .stopped || phase == .done else { return }
         scanTask?.cancel()
         removedSinceScanStarted = []
         scanTask = Task { [source = pipeline.source] in

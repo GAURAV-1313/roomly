@@ -9,6 +9,7 @@ final class ChangingPhotoSource: PhotoSource {
     private struct State {
         var library: FakePhotoSource
         var indexCount = 0
+        var hashCount = 0
     }
 
     private let state: OSAllocatedUnfairLock<State>
@@ -19,6 +20,8 @@ final class ChangingPhotoSource: PhotoSource {
 
     /// How many times the library was read: once per scan or index refresh.
     var indexCount: Int { state.withLock { $0.indexCount } }
+    /// How many photos were read for comparing: zero for a quiet index refresh.
+    var hashCount: Int { state.withLock { $0.hashCount } }
 
     func replaceSnapshots(_ snapshots: [AssetSnapshot]) {
         state.withLock { state in
@@ -46,6 +49,9 @@ final class ChangingPhotoSource: PhotoSource {
     }
 
     func hashTiles(for id: String) async -> HashTiles? {
-        await state.withLock { $0.library }.hashTiles(for: id)
+        await state.withLock { state in
+            state.hashCount += 1
+            return state.library
+        }.hashTiles(for: id)
     }
 }

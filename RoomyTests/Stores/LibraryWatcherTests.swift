@@ -19,9 +19,11 @@ final class LibraryWatcherTests: XCTestCase {
 
     private var withoutClip: [AssetSnapshot] { photos.filter { $0.id != "clip" } }
 
-    /// Regression: after the first scan, a video deleted in the Photos app stayed listed.
+    /// Regression: after the first scan, a video deleted in the Photos app stayed listed. And on a real iPhone a
+    /// change outside Roomy (an iCloud sync, a trip to Photos) started a full scan with its progress every time;
+    /// now it only re-reads the index, quietly, and compares nothing.
     @MainActor
-    func testAChangeAfterAFinishedScanRescansOnce() async throws {
+    func testAChangeAfterAFinishedScanReadsTheIndexAgainQuietly() async throws {
         let (source, changes) = (ChangingPhotoSource(FakePhotoSource(snapshots: photos)), FakeLibraryChanges())
         let (watcher, scan) = makeWatcher(source, changes: changes)
         watcher.start()
@@ -29,16 +31,18 @@ final class LibraryWatcherTests: XCTestCase {
         watcher.startScan()
         await scan.waitForScan()
 
+        let hashedByFirstScan = source.hashCount
         source.replaceSnapshots(withoutClip)
         changes.recordChange()
-        try await waitUntil { source.indexCount == 2 && scan.phase == .done }
-        XCTAssertTrue(scan.videos.isEmpty)
+        try await waitUntil { source.indexCount == 2 && scan.videos.isEmpty }
+        XCTAssertEqual(scan.phase, .done, "a quiet refresh never shows as scanning")
         try await Task.sleep(for: .milliseconds(100))
-        XCTAssertEqual(source.indexCount, 2, "one change, one rescan")
+        XCTAssertEqual(source.indexCount, 2, "one change, one index read")
+        XCTAssertEqual(source.hashCount, hashedByFirstScan, "nothing is compared again")
     }
 
     @MainActor
-    func testAChangeDuringAScanWaitsForItThenRescansOnce() async throws {
+    func testAChangeDuringAScanWaitsForItThenReadsTheIndexOnce() async throws {
         let source = ChangingPhotoSource(FakePhotoSource(snapshots: photos, delay: .milliseconds(200)))
         let changes = FakeLibraryChanges()
         let (watcher, scan) = makeWatcher(source, changes: changes)
@@ -89,7 +93,7 @@ final class LibraryWatcherTests: XCTestCase {
     }
 
     @MainActor
-    func testAChangeAfterTheCleanupWindowStillRescans() async throws {
+    func testAChangeAfterTheCleanupWindowStillRefreshes() async throws {
         let (source, changes) = (ChangingPhotoSource(FakePhotoSource(snapshots: photos)), FakeLibraryChanges())
         let (watcher, scan) = makeWatcher(source, changes: changes)
         watcher.start()
