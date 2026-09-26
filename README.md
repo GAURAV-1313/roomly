@@ -180,7 +180,5 @@ Groups, which a free Apple ID can't use), Face ID vault (iOS already has a locke
 
 ## How it was built
 
-Claude Code (Opus) wrote the code with me directing and reviewing: planning, the Figma design through the
-Figma MCP, Xcode builds and the iOS Simulator through their tools, and Axiom's iOS skills and auditors
-(concurrency, accessibility, UX flow, Liquid Glass, privacy) as a second review. Each audit finding was fixed
-in code or recorded above.
+Claude Code wrote the code with me directing and reviewing: planning, the Figma design with figma, Xcode builds and the iOS Simulator through their tools, and some agent iOS skills and auditors
+(concurrency, accessibility, UX flow, Liquid Glass, privacy) as a second review.
